@@ -164,10 +164,11 @@ class _IdeasPageState extends State<IdeasPage> {
           controller.ideas.isEmpty
               ? const Center(
                   child: Padding(
-                    padding: EdgeInsets.all(24),
+                    padding: EdgeInsets.all(54),
                     child: Text(
                       'Aucune idée pour le moment.\nAppuyez sur le micro pour capturer votre première idée.',
                       textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 24),
                     ),
                   ),
                 )
@@ -196,7 +197,7 @@ class _IdeasPageState extends State<IdeasPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _openCaptureSheet,
         tooltip: 'Enregistrer une idée',
-        child: const Icon(LucideIcons.mic),
+        child: const Icon(LucideIcons.mic, size: 28),
       ),
     );
   }
