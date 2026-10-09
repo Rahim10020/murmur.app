@@ -193,10 +193,17 @@ class _IdeasPageState extends State<IdeasPage> {
                   },
                 ),
       },
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openCaptureSheet,
-        tooltip: 'Enregistrer une idée',
-        child: const Icon(LucideIcons.mic, size: 28),
+      floatingActionButton: SizedBox(
+        width: 72,
+        height: 72,
+        child: FloatingActionButton(
+          onPressed: _openCaptureSheet,
+          tooltip: 'Enregistrer une idée',
+          child: const Icon(
+            LucideIcons.mic,
+            size: 32,
+          ), // à ajuster en proportion
+        ),
       ),
     );
   }
