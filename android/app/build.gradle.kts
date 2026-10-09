@@ -10,6 +10,9 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // Requis par flutter_local_notifications v10+ (planification).
+        // Voir https://pub.dev/packages/flutter_local_notifications (desugaring).
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
@@ -17,6 +20,8 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.murmur.app"
+        // Requis par flutter_local_notifications (voir ci-dessus).
+        multiDexEnabled = true
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -42,4 +47,9 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Requis par flutter_local_notifications (desugaring).
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

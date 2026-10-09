@@ -14,6 +14,7 @@ import 'package:murmur/features/ideas/domain/idea_repository.dart';
 import 'package:murmur/features/ideas/presentation/ideas_controller.dart';
 import 'package:murmur/features/ideas/presentation/ideas_page.dart';
 import 'package:murmur/features/ideas/presentation/playback_controller.dart';
+import 'package:murmur/features/reminders/data/flutter_reminder_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class FakeIdeaRepository implements IdeaRepository {
@@ -63,6 +64,46 @@ class FakeRecorderBackend implements RecorderBackend {
   Future<void> stop() async {}
 }
 
+class FakeReminderService implements ReminderService {
+  final Map<String, DateTime> scheduled = <String, DateTime>{};
+  final List<String> cancelled = <String>[];
+
+  @override
+  Future<void> cancelReminder(String ideaId) async {
+    cancelled.add(ideaId);
+    scheduled.remove(ideaId);
+  }
+
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  Future<void> init() async {}
+
+  @override
+  Future<String?> initialNotificationIdeaId() async => null;
+
+  @override
+  Stream<String?> get onNotificationTap => const Stream.empty();
+
+  @override
+  Future<Set<int>> pendingNotificationIds() async => <int>{};
+
+  @override
+  Future<void> reconcile(Map<String, DateTime> futureByIdea) async {}
+
+  @override
+  Future<bool> requestPermission() async => true;
+
+  @override
+  Future<void> scheduleReminder({
+    required String ideaId,
+    required DateTime whenUtc,
+  }) async {
+    scheduled[ideaId] = whenUtc;
+  }
+}
+
 class FakePlayerBackend implements PlayerBackend {
   @override
   Future<void> dispose() async {}
@@ -104,6 +145,8 @@ class _Fixtures {
     required this.ideas,
     required this.capture,
     required this.playback,
+    required this.reminders,
+    required this.highlightedIdeaId,
     required this.service,
   });
 
@@ -112,9 +155,12 @@ class _Fixtures {
   final IdeasController ideas;
   final CaptureController capture;
   final PlaybackController playback;
+  final ReminderService reminders;
+  final ValueNotifier<String?> highlightedIdeaId;
   final RecordingService service;
 
   Future<void> dispose() async {
+    highlightedIdeaId.dispose();
     ideas.dispose();
     capture.dispose();
     playback.dispose();
@@ -149,6 +195,8 @@ Future<_Fixtures> _setUpFixtures(
       ),
       capture: CaptureController(service),
       playback: PlaybackController(FakePlayerBackend()),
+      reminders: FakeReminderService(),
+      highlightedIdeaId: ValueNotifier<String?>(null),
       service: service,
     );
   });
@@ -162,7 +210,9 @@ Future<void> _pumpPage(WidgetTester tester, _Fixtures f) async {
         controller: f.ideas,
         capture: f.capture,
         playback: f.playback,
+        reminders: f.reminders,
         audioDir: f.audioDir,
+        highlightedIdeaId: f.highlightedIdeaId,
       ),
     ),
   );
@@ -194,6 +244,22 @@ void main() {
       expect(find.textContaining('Idée du'), findsNWidgets(2));
       expect(find.byIcon(LucideIcons.play), findsNWidgets(2));
       expect(find.byIcon(LucideIcons.ellipsis), findsNWidgets(2));
+      expect(find.byIcon(LucideIcons.bell), findsNWidgets(2));
+    });
+
+    testWidgets('deep-link : idée mise en avant après tap notification', (
+      tester,
+    ) async {
+      final f = await _setUpFixtures(tester, ideas: [_idea('a'), _idea('b')]);
+      addTearDown(() => tester.runAsync(f.dispose));
+      await _pumpPage(tester, f);
+
+      f.highlightedIdeaId.value = 'b';
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // L'idée ciblée reste visible (défilement + surlignage, pas de crash).
+      expect(find.textContaining('Idée du'), findsNWidgets(2));
     });
 
     testWidgets('erreur de chargement affichée sans crash', (tester) async {

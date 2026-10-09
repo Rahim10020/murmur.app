@@ -41,6 +41,9 @@ dependencies:
   record: ^7.1.2
   just_audio: ^0.10.6
   lucide_flutter: ^1.47.0
+  flutter_local_notifications: ^22.3.1
+  timezone: ^0.11.1
+  flutter_timezone: ^5.1.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
