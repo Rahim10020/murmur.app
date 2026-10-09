@@ -11,7 +11,9 @@ enum PlaybackState { idle, loading, playing, paused, completed, error }
 
 /// Pilote la lecture d'un seul flux à la fois (un seul lecteur partagé).
 ///
-/// Fichier manquant ou illisible → état erreur récupérable, jamais de crash.
+/// La progression suit [PlayerBackend.statusStream] (émissions régulières) :
+/// aucun sondage par timer. Fichier manquant ou illisible → état erreur
+/// récupérable, jamais de crash.
 class PlaybackController extends ChangeNotifier {
   PlaybackController(this._backend);
 
@@ -22,7 +24,7 @@ class PlaybackController extends ChangeNotifier {
   Duration position = Duration.zero;
   Duration? totalDuration;
   String? errorMessage;
-  Timer? _ticker;
+  StreamSubscription<PlayerStatus>? _statusSubscription;
 
   bool isActiveFor(String ideaId) =>
       currentIdeaId == ideaId &&
@@ -48,7 +50,7 @@ class PlaybackController extends ChangeNotifier {
   }
 
   Future<void> play(Idea idea, String audioPath) async {
-    await _stopTicker();
+    await _cancelStatusSubscription();
     try {
       await _backend.stop();
     } catch (_) {
@@ -72,10 +74,9 @@ class PlaybackController extends ChangeNotifier {
       await _backend.play();
       state = PlaybackState.playing;
       notifyListeners();
-      _ticker?.cancel();
-      _ticker = Timer.periodic(
-        const Duration(milliseconds: 500),
-        (_) => _poll(),
+      _statusSubscription = _backend.statusStream().listen(
+        _onStatus,
+        onError: (_) {},
       );
     } catch (e) {
       state = PlaybackState.error;
@@ -89,7 +90,6 @@ class PlaybackController extends ChangeNotifier {
     try {
       await _backend.pause();
     } finally {
-      await _stopTicker();
       state = PlaybackState.paused;
       notifyListeners();
     }
@@ -115,7 +115,7 @@ class PlaybackController extends ChangeNotifier {
   }
 
   Future<void> stop() async {
-    await _stopTicker();
+    await _cancelStatusSubscription();
     try {
       await _backend.stop();
     } catch (_) {
@@ -133,10 +133,10 @@ class PlaybackController extends ChangeNotifier {
     notifyListeners();
     try {
       await _backend.play();
-      _ticker?.cancel();
-      _ticker = Timer.periodic(
-        const Duration(milliseconds: 500),
-        (_) => _poll(),
+      await _cancelStatusSubscription();
+      _statusSubscription = _backend.statusStream().listen(
+        _onStatus,
+        onError: (_) {},
       );
     } catch (e) {
       state = PlaybackState.error;
@@ -145,31 +145,34 @@ class PlaybackController extends ChangeNotifier {
     }
   }
 
-  Future<void> _poll() async {
-    try {
-      position = _backend.position;
-    } catch (_) {
-      return;
+  void _onStatus(PlayerStatus status) {
+    if (currentIdeaId == null || state == PlaybackState.error) return;
+    position = status.position;
+    if (status.duration != null) {
+      totalDuration = status.duration;
     }
-    final total = totalDuration;
-    if (total != null &&
-        total > Duration.zero &&
-        position >= total &&
-        state == PlaybackState.playing) {
-      await _stopTicker();
-      state = PlaybackState.completed;
+    if (status.completed) {
+      if (state == PlaybackState.playing) {
+        state = PlaybackState.completed;
+      }
+    } else if (!status.playing && state == PlaybackState.playing) {
+      // Interruption externe (appel, autre app audio…).
+      state = PlaybackState.paused;
+    } else if (status.playing &&
+        (state == PlaybackState.paused || state == PlaybackState.loading)) {
+      state = PlaybackState.playing;
     }
     notifyListeners();
   }
 
-  Future<void> _stopTicker() async {
-    _ticker?.cancel();
-    _ticker = null;
+  Future<void> _cancelStatusSubscription() async {
+    await _statusSubscription?.cancel();
+    _statusSubscription = null;
   }
 
   @override
   void dispose() {
-    _ticker?.cancel();
+    _cancelStatusSubscription();
     _backend.dispose();
     super.dispose();
   }

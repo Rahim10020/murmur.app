@@ -16,6 +16,7 @@ import '../features/ideas/presentation/playback_controller.dart';
 import '../features/reminders/data/flutter_reminder_service.dart';
 import '../features/reminders/domain/reminder_policy.dart';
 import '../shared/services/app_directories.dart';
+import 'appearance.dart';
 import 'theme.dart';
 
 /// Racine applicative Murmur.
@@ -42,11 +43,13 @@ class _MurmurAppState extends State<MurmurApp> {
   Directory? _audioDir;
   Directory? _safetyDir;
   final ValueNotifier<String?> _highlightedIdeaId = ValueNotifier(null);
+  late final AppearanceController _appearance = AppearanceController();
   String? _error;
 
   @override
   void initState() {
     super.initState();
+    _appearance.load();
     _bootstrap();
   }
 
@@ -138,41 +141,47 @@ class _MurmurAppState extends State<MurmurApp> {
     _reminders?.dispose();
     _repository?.close();
     _highlightedIdeaId.dispose();
+    _appearance.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Murmur',
-      theme: MurmurTheme.light(),
-      darkTheme: MurmurTheme.dark(),
-      home: _error != null
-          ? Scaffold(
-              appBar: AppBar(title: const Text('Murmur')),
-              body: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(_error!, textAlign: TextAlign.center),
+    return ListenableBuilder(
+      listenable: _appearance,
+      builder: (context, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Murmur',
+        theme: MurmurTheme.light(),
+        darkTheme: MurmurTheme.dark(),
+        themeMode: _appearance.mode,
+        home: _error != null
+            ? Scaffold(
+                appBar: AppBar(title: const Text('Murmur')),
+                body: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(_error!, textAlign: TextAlign.center),
+                  ),
                 ),
+              )
+            : _ideas == null ||
+                  _capture == null ||
+                  _playback == null ||
+                  _audioDir == null ||
+                  _safetyDir == null
+            ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+            : IdeasPage(
+                controller: _ideas!,
+                capture: _capture!,
+                playback: _playback!,
+                reminders: _reminders ?? _DisabledReminderService(),
+                audioDir: _audioDir!,
+                safetyDir: _safetyDir!,
+                appearance: _appearance,
+                highlightedIdeaId: _highlightedIdeaId,
               ),
-            )
-          : _ideas == null ||
-                _capture == null ||
-                _playback == null ||
-                _audioDir == null ||
-                _safetyDir == null
-          ? const Scaffold(body: Center(child: CircularProgressIndicator()))
-          : IdeasPage(
-              controller: _ideas!,
-              capture: _capture!,
-              playback: _playback!,
-              reminders: _reminders ?? _DisabledReminderService(),
-              audioDir: _audioDir!,
-              safetyDir: _safetyDir!,
-              highlightedIdeaId: _highlightedIdeaId,
-            ),
+      ),
     );
   }
 }

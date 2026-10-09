@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
+import 'package:murmur/app/appearance.dart';
 import 'package:murmur/features/capture/data/recorder_backend.dart';
 import 'package:murmur/features/capture/data/recording_service.dart';
 import 'package:murmur/features/capture/presentation/capture_controller.dart';
@@ -121,10 +122,10 @@ class FakePlayerBackend implements PlayerBackend {
   Future<void> play() async {}
 
   @override
-  Duration get position => Duration.zero;
+  Future<void> seek(Duration position) async {}
 
   @override
-  Future<void> seek(Duration position) async {}
+  Stream<PlayerStatus> statusStream() => const Stream.empty();
 
   @override
   Future<void> stop() async {}
@@ -149,6 +150,7 @@ class _Fixtures {
     required this.capture,
     required this.playback,
     required this.reminders,
+    required this.appearance,
     required this.highlightedIdeaId,
     required this.service,
   });
@@ -159,6 +161,7 @@ class _Fixtures {
   final CaptureController capture;
   final PlaybackController playback;
   final ReminderService reminders;
+  final AppearanceController appearance;
   final ValueNotifier<String?> highlightedIdeaId;
   final RecordingService service;
 
@@ -167,6 +170,7 @@ class _Fixtures {
     ideas.dispose();
     capture.dispose();
     playback.dispose();
+    appearance.dispose();
     await service.dispose();
     await db.close();
     if (await audioDir.exists()) {
@@ -199,6 +203,7 @@ Future<_Fixtures> _setUpFixtures(
       capture: CaptureController(service),
       playback: PlaybackController(FakePlayerBackend()),
       reminders: FakeReminderService(),
+      appearance: AppearanceController(store: MemoryThemeModeStore()),
       highlightedIdeaId: ValueNotifier<String?>(null),
       service: service,
     );
@@ -216,6 +221,7 @@ Future<void> _pumpPage(WidgetTester tester, _Fixtures f) async {
         reminders: f.reminders,
         audioDir: f.audioDir,
         safetyDir: f.audioDir,
+        appearance: f.appearance,
         highlightedIdeaId: f.highlightedIdeaId,
       ),
     ),

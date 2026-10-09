@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
+import '../../../app/appearance.dart';
 import '../../../app/theme.dart';
 import '../../capture/presentation/capture_controller.dart';
 import '../../rediscovery/presentation/rediscovery_session.dart';
@@ -24,6 +25,7 @@ class IdeasPage extends StatefulWidget {
     required this.reminders,
     required this.audioDir,
     required this.safetyDir,
+    required this.appearance,
     required this.highlightedIdeaId,
   });
 
@@ -33,6 +35,7 @@ class IdeasPage extends StatefulWidget {
   final ReminderService reminders;
   final Directory audioDir;
   final Directory safetyDir;
+  final AppearanceController appearance;
 
   /// ID d'idée à mettre en avant (deep-link depuis une notification).
   final ValueNotifier<String?> highlightedIdeaId;
@@ -125,6 +128,7 @@ class _IdeasPageState extends State<IdeasPage> {
                     reminders: widget.reminders,
                     audioDir: widget.audioDir,
                     safetyDir: widget.safetyDir,
+                    appearance: widget.appearance,
                     onRestored: () => widget.controller.refresh(),
                   ),
                 ),
@@ -480,7 +484,10 @@ class _ProgressBar extends StatelessWidget {
           child: Slider(
             value: maxMs == 0 ? 0 : valueMs.toDouble(),
             max: maxMs == 0 ? 1 : maxMs.toDouble(),
-            onChanged: (value) => onSeek(Duration(milliseconds: value.toInt())),
+            // Seek au relâcher : évite une rafale de seeks pendant le drag.
+            onChanged: (_) {},
+            onChangeEnd: (value) =>
+                onSeek(Duration(milliseconds: value.toInt())),
           ),
         ),
         Text(formatDuration(total)),
@@ -488,11 +495,6 @@ class _ProgressBar extends StatelessWidget {
     );
   }
 }
-
-/// Panneau de rappel : presets simples + date personnalisée (brief §3).
-///
-/// La date choisie est validée comme future ; la permission de notification
-/// est demandée au moment du choix, avec explication en cas de refus.
 
 /// Panneau de capture : un seul geste pour démarrer, un seul pour garder.
 class CaptureSheet extends StatefulWidget {

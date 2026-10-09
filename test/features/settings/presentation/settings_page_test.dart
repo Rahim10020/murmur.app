@@ -7,6 +7,7 @@ import 'package:murmur/features/ideas/domain/idea.dart';
 import 'package:murmur/features/ideas/domain/idea_repository.dart';
 import 'package:murmur/features/ideas/presentation/ideas_controller.dart';
 import 'package:murmur/features/reminders/data/flutter_reminder_service.dart';
+import 'package:murmur/app/appearance.dart';
 import 'package:murmur/features/settings/presentation/settings_page.dart';
 
 class FakeIdeaRepository implements IdeaRepository {
@@ -70,7 +71,11 @@ void main() {
       tester,
     ) async {
       final controller = IdeasController(FakeIdeaRepository());
-      addTearDown(controller.dispose);
+      final appearance = AppearanceController(store: MemoryThemeModeStore());
+      addTearDown(() {
+        controller.dispose();
+        appearance.dispose();
+      });
 
       await tester.pumpWidget(
         MaterialApp(
@@ -79,6 +84,7 @@ void main() {
             reminders: FakeReminderService(),
             audioDir: Directory('/tmp/murmur-audio-test'),
             safetyDir: Directory('/tmp/murmur-safety-test'),
+            appearance: appearance,
             onRestored: () async {},
           ),
         ),
@@ -91,6 +97,40 @@ void main() {
       expect(find.byIcon(LucideIcons.download), findsOneWidget);
       expect(find.byIcon(LucideIcons.upload), findsOneWidget);
       expect(find.textContaining('ne la téléverse nulle part'), findsOneWidget);
+    });
+
+    testWidgets('section apparence : trio Système/Clair/Sombre', (
+      tester,
+    ) async {
+      final controller = IdeasController(FakeIdeaRepository());
+      final appearance = AppearanceController(store: MemoryThemeModeStore());
+      addTearDown(() {
+        controller.dispose();
+        appearance.dispose();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SettingsPage(
+            controller: controller,
+            reminders: FakeReminderService(),
+            audioDir: Directory('/tmp/murmur-audio-test'),
+            safetyDir: Directory('/tmp/murmur-safety-test'),
+            appearance: appearance,
+            onRestored: () async {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Apparence'), findsOneWidget);
+      expect(find.text('Système'), findsOneWidget);
+      expect(find.text('Clair'), findsOneWidget);
+      expect(find.text('Sombre'), findsOneWidget);
+
+      await tester.tap(find.text('Sombre'));
+      await tester.pump();
+      expect(appearance.mode, ThemeMode.dark);
     });
   });
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -9,11 +10,14 @@ class FakePlayerBackend implements PlayerBackend {
   FakePlayerBackend({this.failOnLoad = false});
 
   bool failOnLoad;
-  Duration positionValue = Duration.zero;
   int playCount = 0;
+  final StreamController<PlayerStatus> statuses =
+      StreamController<PlayerStatus>.broadcast();
 
   @override
-  Future<void> dispose() async {}
+  Future<void> dispose() async {
+    await statuses.close();
+  }
 
   @override
   Future<Duration?> loadFile(String path) async {
@@ -30,16 +34,33 @@ class FakePlayerBackend implements PlayerBackend {
   }
 
   @override
-  Duration get position => positionValue;
+  Future<void> seek(Duration position) async {}
 
   @override
-  Future<void> seek(Duration position) async {
-    positionValue = position;
-  }
+  Stream<PlayerStatus> statusStream() => statuses.stream;
 
   @override
   Future<void> stop() async {}
+
+  void emitStatus(PlayerStatus status) => statuses.add(status);
 }
+
+PlayerStatus _status({
+  Duration position = Duration.zero,
+  Duration? duration = const Duration(seconds: 30),
+  bool playing = true,
+  bool completed = false,
+}) {
+  return PlayerStatus(
+    position: position,
+    duration: duration,
+    playing: playing,
+    completed: completed,
+  );
+}
+
+Future<void> _flushEvents() =>
+    Future<void>.delayed(const Duration(milliseconds: 10));
 
 Idea _idea(String id) {
   return Idea(
@@ -74,6 +95,65 @@ void main() {
       await controller.toggle(_idea('a'), audioPath);
       expect(controller.state, PlaybackState.playing);
       expect(backend.playCount, 2);
+    });
+
+    test('la position émise traverse jusqu’au contrôleur', () async {
+      final dir = await Directory.systemTemp.createTemp('murmur-play-');
+      addTearDown(() => dir.delete(recursive: true));
+      final audioPath = '${dir.path}/a.m4a';
+      await File(audioPath).writeAsBytes(<int>[1]);
+
+      final backend = FakePlayerBackend();
+      final controller = PlaybackController(backend);
+      addTearDown(controller.dispose);
+
+      await controller.play(_idea('a'), audioPath);
+      backend.emitStatus(_status(position: const Duration(seconds: 7)));
+      await _flushEvents();
+
+      expect(controller.position, const Duration(seconds: 7));
+      expect(controller.state, PlaybackState.playing);
+    });
+
+    test('fin de lecture via stream : état completed', () async {
+      final dir = await Directory.systemTemp.createTemp('murmur-play-');
+      addTearDown(() => dir.delete(recursive: true));
+      final audioPath = '${dir.path}/a.m4a';
+      await File(audioPath).writeAsBytes(<int>[1]);
+
+      final backend = FakePlayerBackend();
+      final controller = PlaybackController(backend);
+      addTearDown(controller.dispose);
+
+      await controller.play(_idea('a'), audioPath);
+      backend.emitStatus(
+        _status(
+          position: const Duration(seconds: 30),
+          playing: false,
+          completed: true,
+        ),
+      );
+      await _flushEvents();
+
+      expect(controller.state, PlaybackState.completed);
+      expect(controller.position, const Duration(seconds: 30));
+    });
+
+    test('interruption externe : playing -> paused', () async {
+      final dir = await Directory.systemTemp.createTemp('murmur-play-');
+      addTearDown(() => dir.delete(recursive: true));
+      final audioPath = '${dir.path}/a.m4a';
+      await File(audioPath).writeAsBytes(<int>[1]);
+
+      final backend = FakePlayerBackend();
+      final controller = PlaybackController(backend);
+      addTearDown(controller.dispose);
+
+      await controller.play(_idea('a'), audioPath);
+      backend.emitStatus(_status(playing: false));
+      await _flushEvents();
+
+      expect(controller.state, PlaybackState.paused);
     });
 
     test('fichier manquant : erreur récupérable, pas de crash', () async {

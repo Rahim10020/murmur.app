@@ -9,6 +9,7 @@ import '../../backup/data/backup_service.dart';
 import '../../backup/domain/backup_manifest.dart';
 import '../../ideas/presentation/ideas_controller.dart';
 import '../../reminders/data/flutter_reminder_service.dart';
+import '../../../app/appearance.dart';
 
 String formatBytes(int bytes) {
   if (bytes < 1024) return '$bytes o';
@@ -30,6 +31,7 @@ class SettingsPage extends StatefulWidget {
     required this.reminders,
     required this.audioDir,
     required this.safetyDir,
+    required this.appearance,
     required this.onRestored,
   });
 
@@ -37,6 +39,7 @@ class SettingsPage extends StatefulWidget {
   final ReminderService reminders;
   final Directory audioDir;
   final Directory safetyDir;
+  final AppearanceController appearance;
   final Future<void> Function() onRestored;
 
   @override
@@ -56,6 +59,37 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          const Text(
+            'Apparence',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          ListenableBuilder(
+            listenable: widget.appearance,
+            builder: (context, _) => SegmentedButton<ThemeMode>(
+              segments: const [
+                ButtonSegment<ThemeMode>(
+                  value: ThemeMode.system,
+                  icon: Icon(LucideIcons.monitorSmartphone),
+                  label: Text('Système'),
+                ),
+                ButtonSegment<ThemeMode>(
+                  value: ThemeMode.light,
+                  icon: Icon(LucideIcons.sun),
+                  label: Text('Clair'),
+                ),
+                ButtonSegment<ThemeMode>(
+                  value: ThemeMode.dark,
+                  icon: Icon(LucideIcons.moon),
+                  label: Text('Sombre'),
+                ),
+              ],
+              selected: {widget.appearance.mode},
+              onSelectionChanged: (selection) =>
+                  widget.appearance.setMode(selection.first),
+            ),
+          ),
+          const SizedBox(height: 24),
           const Text(
             'Sauvegarde locale',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
