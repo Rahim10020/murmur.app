@@ -1,4 +1,4 @@
-package com.example.murmur
+package com.murmur.app
 
 import io.flutter.embedding.android.FlutterActivity
 
