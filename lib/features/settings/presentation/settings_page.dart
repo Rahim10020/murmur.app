@@ -88,7 +88,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   widget.appearance.setMode(selection.first),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
           const Text('Sauvegarde locale', style: MurmurTextStyles.sectionTitle),
           const SizedBox(height: 4),
           const Text(

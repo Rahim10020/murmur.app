@@ -15,7 +15,7 @@ class MurmurTextStyles {
   static const TextStyle paragraph = TextStyle(
     fontFamily: MurmurTheme.fontFamily,
     fontWeight: FontWeight.w400,
-    fontSize: 15,
+    fontSize: 16,
     height: 1.5,
   );
 
@@ -31,7 +31,7 @@ class MurmurTextStyles {
   static const TextStyle sectionTitle = TextStyle(
     fontFamily: MurmurTheme.fontFamily,
     fontWeight: FontWeight.w500,
-    fontSize: 18,
+    fontSize: 24,
   );
 
   /// Labels de bouton : Gotham Medium explicite.
