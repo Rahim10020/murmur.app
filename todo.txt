@@ -1,0 +1,4 @@
+-- j'ai enregistre un audio et je l'ai aussi ecoute le seul souci c'est que le progress qui 
+vient quand on ecoute un audio ne fonctionne pas. a la fin de l'audio, ca va en meme temps 
+a la fin mais on ne voyait pas la progression quand on ecoutait l'audio
+-- la page de parametres n'est pas complet. J'aimerais pouvoir switcher entre le light et le dark mode.
