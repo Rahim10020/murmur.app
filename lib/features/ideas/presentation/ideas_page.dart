@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../../../app/appearance.dart';
-import '../../../app/theme.dart';
+import '../../../app/text_styles.dart';
+import '../../../shared/widgets/murmur_button.dart';
 import '../../capture/presentation/capture_controller.dart';
 import '../../rediscovery/presentation/rediscovery_session.dart';
 import '../../reminders/data/flutter_reminder_service.dart';
@@ -150,12 +151,10 @@ class _IdeasPageState extends State<IdeasPage> {
                 Text(
                   controller.errorMessage ?? 'Erreur inconnue.',
                   textAlign: TextAlign.center,
+                  style: MurmurTextStyles.paragraph,
                 ),
                 const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: controller.refresh,
-                  child: const Text('Réessayer'),
-                ),
+                MurmurButton(onPressed: controller.refresh, label: 'Réessayer'),
               ],
             ),
           ),
@@ -168,7 +167,7 @@ class _IdeasPageState extends State<IdeasPage> {
                     child: Text(
                       'Aucune idée pour le moment.\nAppuyez sur le micro pour capturer votre première idée.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 24),
+                      style: MurmurTextStyles.paragraph,
                     ),
                   ),
                 )
@@ -227,13 +226,14 @@ class _IdeasPageState extends State<IdeasPage> {
           decoration: const InputDecoration(hintText: 'Titre (optionnel)'),
         ),
         actions: [
-          TextButton(
+          MurmurButton(
+            variant: MurmurButtonVariant.text,
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Annuler'),
+            label: 'Annuler',
           ),
-          FilledButton(
+          MurmurButton(
             onPressed: () => Navigator.of(context).pop(textController.text),
-            child: const Text('Enregistrer'),
+            label: 'Enregistrer',
           ),
         ],
       ),
@@ -277,15 +277,17 @@ class _IdeasPageState extends State<IdeasPage> {
         title: const Text('Supprimer cette idée ?'),
         content: const Text(
           'L’audio et la fiche seront définitivement supprimés.',
+          style: MurmurTextStyles.paragraph,
         ),
         actions: [
-          TextButton(
+          MurmurButton(
+            variant: MurmurButtonVariant.text,
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Garder'),
+            label: 'Garder',
           ),
-          FilledButton(
+          MurmurButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Supprimer'),
+            label: 'Supprimer',
           ),
         ],
       ),
@@ -527,7 +529,6 @@ class _CaptureSheetState extends State<CaptureSheet> {
   @override
   Widget build(BuildContext context) {
     final capture = widget.capture;
-    final brightness = Theme.of(context).brightness;
     return PopScope(
       canPop: capture.state != CaptureState.recording,
       onPopInvokedWithResult: (didPop, _) async {
@@ -549,13 +550,17 @@ class _CaptureSheetState extends State<CaptureSheet> {
                 style: Theme.of(context).textTheme.displaySmall,
               ),
               const SizedBox(height: 8),
-              Text(_headline(capture.state)),
+              Text(_headline(capture.state), style: MurmurTextStyles.paragraph),
               if (capture.errorMessage != null) ...[
                 const SizedBox(height: 8),
-                Text(capture.errorMessage!, textAlign: TextAlign.center),
+                Text(
+                  capture.errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: MurmurTextStyles.paragraph,
+                ),
               ],
               const SizedBox(height: 24),
-              _actions(context, brightness, capture),
+              _actions(context, capture),
             ],
           ),
         ),
@@ -573,38 +578,34 @@ class _CaptureSheetState extends State<CaptureSheet> {
     };
   }
 
-  Widget _actions(
-    BuildContext context,
-    Brightness brightness,
-    CaptureController capture,
-  ) {
+  Widget _actions(BuildContext context, CaptureController capture) {
     switch (capture.state) {
       case CaptureState.recording:
         return Row(
           children: [
             Expanded(
-              child: FilledButton.icon(
+              child: MurmurButton(
                 onPressed: () async {
                   await capture.stopAndSave();
                   await widget.onSaved();
                   if (context.mounted) Navigator.of(context).pop();
                 },
-                icon: const Icon(LucideIcons.square),
-                label: const Text('Arrêter et garder'),
+                icon: LucideIcons.square,
+                label: 'Arrêter et garder',
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: FilledButton.icon(
-                style: MurmurTheme.secondaryButtonStyle(brightness),
+              child: MurmurButton(
+                variant: MurmurButtonVariant.secondary,
                 onPressed: () async {
                   final abandon = await _confirmAbandon();
                   if (abandon != true) return;
                   await capture.discard();
                   if (context.mounted) Navigator.of(context).pop();
                 },
-                icon: const Icon(LucideIcons.x),
-                label: const Text('Abandonner'),
+                icon: LucideIcons.x,
+                label: 'Abandonner',
               ),
             ),
           ],
@@ -618,26 +619,27 @@ class _CaptureSheetState extends State<CaptureSheet> {
             const Text(
               'Autorisez le micro dans les réglages Android, puis réessayez.',
               textAlign: TextAlign.center,
+              style: MurmurTextStyles.paragraph,
             ),
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                  child: FilledButton.icon(
+                  child: MurmurButton(
                     onPressed: () => capture.start(),
-                    icon: const Icon(LucideIcons.mic),
-                    label: const Text('Réessayer'),
+                    icon: LucideIcons.mic,
+                    label: 'Réessayer',
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: FilledButton(
-                    style: MurmurTheme.secondaryButtonStyle(brightness),
+                  child: MurmurButton(
+                    variant: MurmurButtonVariant.secondary,
                     onPressed: () {
                       capture.reset();
                       Navigator.of(context).pop();
                     },
-                    child: const Text('Fermer'),
+                    label: 'Fermer',
                   ),
                 ),
               ],
@@ -646,12 +648,12 @@ class _CaptureSheetState extends State<CaptureSheet> {
         );
       case CaptureState.error:
       case CaptureState.idle:
-        return FilledButton(
+        return MurmurButton(
           onPressed: () {
             capture.reset();
             Navigator.of(context).pop();
           },
-          child: const Text('Fermer'),
+          label: 'Fermer',
         );
     }
   }
@@ -661,15 +663,19 @@ class _CaptureSheetState extends State<CaptureSheet> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Abandonner l’enregistrement ?'),
-        content: const Text('L’audio en cours sera définitivement perdu.'),
+        content: const Text(
+          'L’audio en cours sera définitivement perdu.',
+          style: MurmurTextStyles.paragraph,
+        ),
         actions: [
-          TextButton(
+          MurmurButton(
+            variant: MurmurButtonVariant.text,
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Continuer'),
+            label: 'Continuer',
           ),
-          FilledButton(
+          MurmurButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Abandonner'),
+            label: 'Abandonner',
           ),
         ],
       ),

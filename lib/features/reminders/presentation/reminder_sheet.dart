@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
+import '../../../app/text_styles.dart';
+import '../../../shared/widgets/murmur_button.dart';
 import '../../ideas/domain/idea.dart';
 import '../../ideas/presentation/idea_display.dart';
 import '../../ideas/presentation/ideas_controller.dart';
-import '../../reminders/data/flutter_reminder_service.dart';
-import '../../reminders/domain/reminder_policy.dart';
+import '../data/flutter_reminder_service.dart';
+import '../domain/reminder_policy.dart';
 
 /// Panneau de rappel : presets simples + date personnalisée (brief §3).
 ///
@@ -45,60 +47,64 @@ class _ReminderSheetState extends State<ReminderSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Me rappeler',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text('Me rappeler', style: MurmurTextStyles.sectionTitle),
             const SizedBox(height: 4),
             Text(
               widget.idea.reminderAtUtc == null
                   ? 'Aucun rappel pour cette idée.'
                   : 'Rappel actuel : ${formatReminder(widget.idea.reminderAtUtc!)}.',
+              style: MurmurTextStyles.paragraph,
             ),
-            if (_error != null) ...[const SizedBox(height: 8), Text(_error!)],
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!, style: MurmurTextStyles.paragraph),
+            ],
             if (_permissionDenied) ...[
               const SizedBox(height: 8),
               const Text(
                 'Notifications non autorisées : les rappels ne pourront pas '
                 's’afficher tant que l’autorisation n’est pas accordée dans '
                 'les réglages Android.',
+                style: MurmurTextStyles.paragraph,
               ),
             ],
             const SizedBox(height: 16),
             if (_saving)
               const Center(child: CircularProgressIndicator())
             else ...[
-              FilledButton.icon(
+              MurmurButton(
                 onPressed: laterToday == null
                     ? null
                     : () => _schedule(laterToday),
-                icon: const Icon(LucideIcons.moon),
-                label: const Text('Plus tard aujourd’hui (20h00)'),
+                icon: LucideIcons.moon,
+                label: 'Plus tard aujourd’hui (20h00)',
               ),
               const SizedBox(height: 8),
-              FilledButton.icon(
+              MurmurButton(
                 onPressed: () => _schedule(tomorrow),
-                icon: const Icon(LucideIcons.sunrise),
-                label: const Text('Demain (9h00)'),
+                icon: LucideIcons.sunrise,
+                label: 'Demain (9h00)',
               ),
               const SizedBox(height: 8),
-              FilledButton.icon(
+              MurmurButton(
                 onPressed: () => _schedule(nextWeek),
-                icon: const Icon(LucideIcons.calendarClock),
-                label: const Text('Semaine prochaine'),
+                icon: LucideIcons.calendarClock,
+                label: 'Semaine prochaine',
               ),
               const SizedBox(height: 8),
-              OutlinedButton.icon(
+              MurmurButton(
+                variant: MurmurButtonVariant.outline,
                 onPressed: _pickCustom,
-                icon: const Icon(LucideIcons.calendarPlus),
-                label: const Text('Choisir une date…'),
+                icon: LucideIcons.calendarPlus,
+                label: 'Choisir une date…',
               ),
               if (widget.idea.reminderAtUtc != null) ...[
                 const SizedBox(height: 8),
-                TextButton.icon(
+                MurmurButton(
+                  variant: MurmurButtonVariant.text,
                   onPressed: _cancel,
-                  icon: const Icon(LucideIcons.bellOff),
-                  label: const Text('Annuler le rappel'),
+                  icon: LucideIcons.bellOff,
+                  label: 'Annuler le rappel',
                 ),
               ],
             ],

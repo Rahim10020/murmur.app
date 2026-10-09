@@ -18,6 +18,9 @@ class MurmurColors {
 }
 
 /// Thème applicatif : police Gotham, couleurs unies.
+///
+/// Correspondance graisses (voir `pubspec.yaml` et `MurmurTextStyles`) :
+/// Regular 400 = paragraphes, Medium 500 = titres/labels, Bold 700.
 class MurmurTheme {
   const MurmurTheme._();
 
@@ -48,12 +51,6 @@ class MurmurTheme {
         backgroundColor: MurmurColors.primary,
         foregroundColor: MurmurColors.ink,
       ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: MurmurColors.primary,
-          foregroundColor: MurmurColors.ink,
-        ),
-      ),
     );
   }
 
@@ -82,21 +79,6 @@ class MurmurTheme {
         backgroundColor: MurmurColors.primary,
         foregroundColor: MurmurColors.ink,
       ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: MurmurColors.primary,
-          foregroundColor: MurmurColors.ink,
-        ),
-      ),
-    );
-  }
-
-  /// Style de bouton secondaire selon la luminosité.
-  static ButtonStyle secondaryButtonStyle(Brightness brightness) {
-    final isDark = brightness == Brightness.dark;
-    return FilledButton.styleFrom(
-      backgroundColor: isDark ? MurmurColors.secondaryDark : MurmurColors.ink,
-      foregroundColor: MurmurColors.paper,
     );
   }
 }

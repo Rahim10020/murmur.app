@@ -5,11 +5,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
+import '../../../app/appearance.dart';
+import '../../../app/text_styles.dart';
+import '../../../shared/widgets/murmur_button.dart';
 import '../../backup/data/backup_service.dart';
 import '../../backup/domain/backup_manifest.dart';
 import '../../ideas/presentation/ideas_controller.dart';
 import '../../reminders/data/flutter_reminder_service.dart';
-import '../../../app/appearance.dart';
 
 String formatBytes(int bytes) {
   if (bytes < 1024) return '$bytes o';
@@ -59,10 +61,7 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const Text(
-            'Apparence',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          const Text('Apparence', style: MurmurTextStyles.sectionTitle),
           const SizedBox(height: 8),
           ListenableBuilder(
             listenable: widget.appearance,
@@ -90,27 +89,26 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'Sauvegarde locale',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          const Text('Sauvegarde locale', style: MurmurTextStyles.sectionTitle),
           const SizedBox(height: 4),
           const Text(
             'Une archive ZIP contient toutes vos idées et leurs audios. '
             'Elle est enregistrée là où vous choisissez (Téléchargements, '
             'carte SD, clé USB…) : Murmur ne la téléverse nulle part.',
+            style: MurmurTextStyles.paragraph,
           ),
           const SizedBox(height: 16),
-          FilledButton.icon(
+          MurmurButton(
             onPressed: _busy ? null : _export,
-            icon: const Icon(LucideIcons.download),
-            label: const Text('Exporter une sauvegarde'),
+            icon: LucideIcons.download,
+            label: 'Exporter une sauvegarde',
           ),
           const SizedBox(height: 8),
-          OutlinedButton.icon(
+          MurmurButton(
+            variant: MurmurButtonVariant.outline,
             onPressed: _busy ? null : _restore,
-            icon: const Icon(LucideIcons.upload),
-            label: const Text('Restaurer une sauvegarde'),
+            icon: LucideIcons.upload,
+            label: 'Restaurer une sauvegarde',
           ),
           if (_busy) ...[
             const SizedBox(height: 16),
@@ -118,7 +116,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
           if (_status.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Text(_status),
+            Text(_status, style: MurmurTextStyles.paragraph),
           ],
         ],
       ),
@@ -256,15 +254,17 @@ class _SettingsPageState extends State<SettingsPage> {
           'Vos idées actuelles seront remplacées (une copie de sécurité '
           'automatique est conservée dans l’app avant remplacement). '
           'Les rappels passés ne seront pas replanifiés.',
+          style: MurmurTextStyles.paragraph,
         ),
         actions: [
-          TextButton(
+          MurmurButton(
+            variant: MurmurButtonVariant.text,
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Garder mes données'),
+            label: 'Garder mes données',
           ),
-          FilledButton(
+          MurmurButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Remplacer'),
+            label: 'Remplacer',
           ),
         ],
       ),
@@ -287,11 +287,11 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Restauration terminée'),
-        content: Text(buffer.toString()),
+        content: Text(buffer.toString(), style: MurmurTextStyles.paragraph),
         actions: [
-          FilledButton(
+          MurmurButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            label: 'OK',
           ),
         ],
       ),

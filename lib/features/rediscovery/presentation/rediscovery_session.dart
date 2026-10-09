@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
+import '../../../app/text_styles.dart';
+import '../../../shared/widgets/murmur_button.dart';
 import '../../ideas/domain/idea.dart';
 import '../../ideas/presentation/idea_display.dart';
 import '../../ideas/presentation/ideas_controller.dart';
@@ -84,11 +86,12 @@ class _RediscoverySessionPageState extends State<RediscoverySessionPage> {
             const Text(
               'Session terminée. Vos idées sont à jour.',
               textAlign: TextAlign.center,
+              style: MurmurTextStyles.paragraph,
             ),
             const SizedBox(height: 24),
-            FilledButton(
+            MurmurButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
+              label: 'Fermer',
             ),
           ],
         ),
@@ -128,13 +131,17 @@ class _RediscoverySessionPageState extends State<RediscoverySessionPage> {
             Text(
               'Enregistrée le ${_formatDate(idea.createdAtUtc)} • '
               '${formatDuration(Duration(milliseconds: idea.durationMs))}',
+              style: MurmurTextStyles.paragraph,
             ),
-            if (_error != null) ...[const SizedBox(height: 8), Text(_error!)],
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!, style: MurmurTextStyles.paragraph),
+            ],
             const Spacer(),
             if (_busy)
               const Center(child: CircularProgressIndicator())
             else ...[
-              FilledButton.icon(
+              MurmurButton(
                 onPressed: () => _act(
                   idea,
                   () => widget.controller.setStatus(
@@ -143,24 +150,26 @@ class _RediscoverySessionPageState extends State<RediscoverySessionPage> {
                     reminders: widget.reminders,
                   ),
                 ),
-                icon: const Icon(LucideIcons.hourglass),
-                label: const Text('Commencer à travailler dessus'),
+                icon: LucideIcons.hourglass,
+                label: 'Commencer à travailler dessus',
               ),
               const SizedBox(height: 8),
-              FilledButton.icon(
+              MurmurButton(
                 onPressed: () => _remindLater(idea),
-                icon: const Icon(LucideIcons.bellRing),
-                label: const Text('Me rappeler plus tard'),
+                icon: LucideIcons.bellRing,
+                label: 'Me rappeler plus tard',
               ),
               const SizedBox(height: 8),
-              OutlinedButton.icon(
+              MurmurButton(
+                variant: MurmurButtonVariant.outline,
                 onPressed: () =>
                     _act(idea, () => widget.controller.markReviewed(idea.id)),
-                icon: const Icon(LucideIcons.eye),
-                label: const Text('Garder pour plus tard'),
+                icon: LucideIcons.eye,
+                label: 'Garder pour plus tard',
               ),
               const SizedBox(height: 8),
-              TextButton.icon(
+              MurmurButton(
+                variant: MurmurButtonVariant.text,
                 onPressed: () => _act(
                   idea,
                   () => widget.controller.setStatus(
@@ -169,10 +178,11 @@ class _RediscoverySessionPageState extends State<RediscoverySessionPage> {
                     reminders: widget.reminders,
                   ),
                 ),
-                icon: const Icon(LucideIcons.check),
-                label: const Text('Marquer comme terminée'),
+                icon: LucideIcons.check,
+                label: 'Marquer comme terminée',
               ),
-              TextButton.icon(
+              MurmurButton(
+                variant: MurmurButtonVariant.text,
                 onPressed: () => _act(
                   idea,
                   () => widget.controller.setStatus(
@@ -181,8 +191,8 @@ class _RediscoverySessionPageState extends State<RediscoverySessionPage> {
                     reminders: widget.reminders,
                   ),
                 ),
-                icon: const Icon(LucideIcons.archive),
-                label: const Text('Archiver'),
+                icon: LucideIcons.archive,
+                label: 'Archiver',
               ),
             ],
           ],
