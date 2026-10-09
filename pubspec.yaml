@@ -1,5 +1,5 @@
 name: murmur
-description: "A new Flutter project."
+description: "Murmur — capture vocale d'idées, hors-ligne, personnelle."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -38,7 +38,9 @@ dependencies:
   path: ^1.9.1
   path_provider: ^2.1.6
   uuid: ^4.6.0
-
+  record: ^7.1.2
+  just_audio: ^0.10.6
+  lucide_flutter: ^1.47.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -61,6 +63,13 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  fonts:
+    - family: Gotham
+      fonts:
+        - asset: "assets/fonts/Gotham Medium.otf"
+        - asset: "assets/fonts/Gotham Bold.otf"
+          weight: 700
 
   # To add assets to your application, add an assets section, like this:
   # assets:
