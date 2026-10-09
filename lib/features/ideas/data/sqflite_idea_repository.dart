@@ -69,5 +69,32 @@ class SqfliteIdeaRepository implements IdeaRepository {
   }
 
   @override
+  Future<void> replaceAll(List<Idea> ideas) async {
+    for (final idea in ideas) {
+      idea.validate();
+    }
+    final seen = <String>{};
+    for (final idea in ideas) {
+      if (!seen.add(idea.id)) {
+        throw ArgumentError.value(
+          idea.id,
+          'ideas',
+          'ID dupliqué dans le remplacement.',
+        );
+      }
+    }
+    await _db.transaction((txn) async {
+      await txn.delete(IdeaDatabase.tableName);
+      for (final idea in ideas) {
+        await txn.insert(
+          IdeaDatabase.tableName,
+          idea.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.abort,
+        );
+      }
+    });
+  }
+
+  @override
   Future<void> close() => _db.close();
 }

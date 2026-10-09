@@ -8,6 +8,7 @@ import '../../capture/presentation/capture_controller.dart';
 import '../../rediscovery/presentation/rediscovery_session.dart';
 import '../../reminders/data/flutter_reminder_service.dart';
 import '../../reminders/presentation/reminder_sheet.dart';
+import '../../settings/presentation/settings_page.dart';
 import '../domain/idea.dart';
 import 'idea_display.dart';
 import 'ideas_controller.dart';
@@ -22,6 +23,7 @@ class IdeasPage extends StatefulWidget {
     required this.playback,
     required this.reminders,
     required this.audioDir,
+    required this.safetyDir,
     required this.highlightedIdeaId,
   });
 
@@ -30,6 +32,7 @@ class IdeasPage extends StatefulWidget {
   final PlaybackController playback;
   final ReminderService reminders;
   final Directory audioDir;
+  final Directory safetyDir;
 
   /// ID d'idée à mettre en avant (deep-link depuis une notification).
   final ValueNotifier<String?> highlightedIdeaId;
@@ -110,6 +113,23 @@ class _IdeasPageState extends State<IdeasPage> {
               reminders: widget.reminders,
               audioDir: widget.audioDir,
             ),
+          ),
+          IconButton(
+            tooltip: 'Paramètres et sauvegarde',
+            icon: const Icon(LucideIcons.settings),
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => SettingsPage(
+                    controller: widget.controller,
+                    reminders: widget.reminders,
+                    audioDir: widget.audioDir,
+                    safetyDir: widget.safetyDir,
+                    onRestored: () => widget.controller.refresh(),
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),

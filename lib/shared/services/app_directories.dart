@@ -11,6 +11,17 @@ class AppDirectories {
   const AppDirectories._();
 
   static const String audioSubdirName = 'audio';
+  static const String safetySubdirName = 'murmur-safety';
+
+  /// Sauvegardes de sécurité automatiques avant remplacement (phase backup).
+  static Future<Directory> safetyBackupDirectory() async {
+    final docs = await getApplicationDocumentsDirectory();
+    final dir = Directory(p.join(docs.path, safetySubdirName));
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+    return dir;
+  }
 
   /// Répertoire des audios, créé si nécessaire.
   static Future<Directory> audioDirectory() async {

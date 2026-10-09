@@ -19,5 +19,8 @@ abstract class IdeaRepository {
   /// Idées triées par création décroissante (plus récentes d'abord).
   Future<List<Idea>> listNewestFirst({int? limit});
 
+  /// Remplace l'intégralité du contenu (restauration) en une transaction.
+  Future<void> replaceAll(List<Idea> ideas);
+
   Future<void> close();
 }

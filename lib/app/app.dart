@@ -40,6 +40,7 @@ class _MurmurAppState extends State<MurmurApp> {
   StreamSubscription<String?>? _tapSubscription;
   IdeaRepository? _repository;
   Directory? _audioDir;
+  Directory? _safetyDir;
   final ValueNotifier<String?> _highlightedIdeaId = ValueNotifier(null);
   String? _error;
 
@@ -55,6 +56,7 @@ class _MurmurAppState extends State<MurmurApp> {
       final db = await IdeaDatabase.open();
       final repository = SqfliteIdeaRepository(db);
       final audioDir = await AppDirectories.audioDirectory();
+      final safetyDir = await AppDirectories.safetyBackupDirectory();
       final recordingService = RecordingService(
         repository: repository,
         backend: RecordRecorderBackend(),
@@ -103,6 +105,7 @@ class _MurmurAppState extends State<MurmurApp> {
       setState(() {
         _repository = repository;
         _audioDir = audioDir;
+        _safetyDir = safetyDir;
         _recordingService = recordingService;
         _reminders = reminderService;
         _tapSubscription = tapSub;
@@ -158,7 +161,8 @@ class _MurmurAppState extends State<MurmurApp> {
           : _ideas == null ||
                 _capture == null ||
                 _playback == null ||
-                _audioDir == null
+                _audioDir == null ||
+                _safetyDir == null
           ? const Scaffold(body: Center(child: CircularProgressIndicator()))
           : IdeasPage(
               controller: _ideas!,
@@ -166,6 +170,7 @@ class _MurmurAppState extends State<MurmurApp> {
               playback: _playback!,
               reminders: _reminders ?? _DisabledReminderService(),
               audioDir: _audioDir!,
+              safetyDir: _safetyDir!,
               highlightedIdeaId: _highlightedIdeaId,
             ),
     );

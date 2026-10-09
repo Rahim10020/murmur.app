@@ -43,6 +43,9 @@ class FakeIdeaRepository implements IdeaRepository {
 
   @override
   Future<void> update(Idea idea) async {}
+
+  @override
+  Future<void> replaceAll(List<Idea> ideas) async {}
 }
 
 class FakeRecorderBackend implements RecorderBackend {
@@ -212,6 +215,7 @@ Future<void> _pumpPage(WidgetTester tester, _Fixtures f) async {
         playback: f.playback,
         reminders: f.reminders,
         audioDir: f.audioDir,
+        safetyDir: f.audioDir,
         highlightedIdeaId: f.highlightedIdeaId,
       ),
     ),

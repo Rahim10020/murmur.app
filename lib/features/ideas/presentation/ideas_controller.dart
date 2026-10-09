@@ -79,6 +79,12 @@ class IdeasController extends ChangeNotifier {
     await refresh();
   }
 
+  /// Remplace tout le contenu (restauration validée). Rafraîchit ensuite.
+  Future<void> replaceAll(List<Idea> ideas) async {
+    await _repository.replaceAll(ideas);
+    await refresh();
+  }
+
   /// Marque une idée comme revue (« garder pour plus tard ») : elle sort
   /// de la redécouverte pour la période de cooldown sans changer de statut.
   Future<void> markReviewed(String id) async {
