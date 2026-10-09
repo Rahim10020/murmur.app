@@ -1,4 +1,20 @@
--- j'ai enregistre un audio et je l'ai aussi ecoute le seul souci c'est que le progress qui 
-vient quand on ecoute un audio ne fonctionne pas. a la fin de l'audio, ca va en meme temps 
-a la fin mais on ne voyait pas la progression quand on ecoutait l'audio
--- la page de parametres n'est pas complet. J'aimerais pouvoir switcher entre le light et le dark mode.
+-- Je veux coder des onboarding (pour la premiere visite ou installation de l'application 
+    par l'utilisateur). on va pas utiliser d'icones. juste du texte de grand taille 
+    et les boutons continuer ou retour. tu vas me trouver les meilleurs phrase marketing a mettre.
+
+-- le menu popup (En cours, Archiver ,et autres...) j'aurais aime qu'on le customise.
+    j'ai l'impression qu'on utiise celui de material.
+
+-- quand je veux renommer une idee, le cursor du champ utilise ma couleur 
+    primary de meme que je soulignement du bas. je ne veux pas ca. je veux que 
+    tu remplace ca par du blanc ou du noir selon le theme qu'on utilise.
+
+-- voir pourquoi j'ai pas de weight pour le font regular dans pubspec yaml
+
+-- simplifier le empty state de idea page. utiliser une grande icone(trouve l'icone approprie) 
+    et un petit texte en bas.
+
+-- Designer le logo et l'utiliser dans l'application
+-- coder la launch page (utiliser le logo)
+-- utiliser le logo comme icone de l'application
+-- mettre en place deux langues : FR , ENG
