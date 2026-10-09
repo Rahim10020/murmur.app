@@ -79,6 +79,20 @@ class IdeasController extends ChangeNotifier {
     await refresh();
   }
 
+  /// Marque une idée comme revue (« garder pour plus tard ») : elle sort
+  /// de la redécouverte pour la période de cooldown sans changer de statut.
+  Future<void> markReviewed(String id) async {
+    final current = await _repository.findById(id);
+    if (current == null) {
+      throw StateError('Idée introuvable.');
+    }
+    final nowUtc = DateTime.now().toUtc();
+    await _repository.update(
+      current.copyWith(updatedAtUtc: nowUtc, lastReviewedAtUtc: () => nowUtc),
+    );
+    await refresh();
+  }
+
   /// Définit (ou déplace) le rappel d'une idée.
   ///
   /// La DB est écrite d'abord (source de vérité) puis l'OS est planifié ;

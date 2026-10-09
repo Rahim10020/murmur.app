@@ -234,6 +234,7 @@ void main() {
 
       expect(find.textContaining('Aucune idée'), findsOneWidget);
       expect(find.byIcon(LucideIcons.mic), findsOneWidget);
+      expect(find.byIcon(LucideIcons.history), findsOneWidget);
     });
 
     testWidgets('liste les idées avec lecture et menu', (tester) async {

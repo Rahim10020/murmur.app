@@ -5,46 +5,13 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../../../app/theme.dart';
 import '../../capture/presentation/capture_controller.dart';
+import '../../rediscovery/presentation/rediscovery_session.dart';
 import '../../reminders/data/flutter_reminder_service.dart';
-import '../../reminders/domain/reminder_policy.dart';
+import '../../reminders/presentation/reminder_sheet.dart';
 import '../domain/idea.dart';
+import 'idea_display.dart';
 import 'ideas_controller.dart';
 import 'playback_controller.dart';
-
-const Map<IdeaStatus, String> statusLabels = <IdeaStatus, String>{
-  IdeaStatus.toReview: 'À revoir',
-  IdeaStatus.inProgress: 'En cours',
-  IdeaStatus.done: 'Terminée',
-  IdeaStatus.archived: 'Archivée',
-};
-
-String formatDuration(Duration duration) {
-  final totalSeconds = duration.inSeconds;
-  final minutes = totalSeconds ~/ 60;
-  final seconds = totalSeconds % 60;
-  return '$minutes:${seconds.toString().padLeft(2, '0')}';
-}
-
-String fallbackTitle(Idea idea) {
-  final custom = idea.title?.trim();
-  if (custom != null && custom.isNotEmpty) return custom;
-  final local = idea.createdAtUtc.toLocal();
-  const months = <String>[
-    'janvier',
-    'février',
-    'mars',
-    'avril',
-    'mai',
-    'juin',
-    'juillet',
-    'août',
-    'septembre',
-    'octobre',
-    'novembre',
-    'décembre',
-  ];
-  return 'Idée du ${local.day} ${months[local.month - 1]}';
-}
 
 /// Écran liste des idées : lecture, rappels, statuts, capture.
 class IdeasPage extends StatefulWidget {
@@ -130,7 +97,22 @@ class _IdeasPageState extends State<IdeasPage> {
   Widget build(BuildContext context) {
     final controller = widget.controller;
     return Scaffold(
-      appBar: AppBar(title: const Text('Murmur')),
+      appBar: AppBar(
+        title: const Text('Murmur'),
+        actions: [
+          IconButton(
+            tooltip: 'Redécouvrir des idées',
+            icon: const Icon(LucideIcons.history),
+            onPressed: () => openRediscoverySession(
+              context: context,
+              controller: widget.controller,
+              playback: widget.playback,
+              reminders: widget.reminders,
+              audioDir: widget.audioDir,
+            ),
+          ),
+        ],
+      ),
       body: switch (controller.state) {
         IdeasListState.initial || IdeasListState.loading => const Center(
           child: CircularProgressIndicator(),
@@ -435,7 +417,7 @@ class _IdeaTile extends StatelessWidget {
       ' \u2022 ${statusLabels[idea.status]}',
     );
     if (hasReminder) {
-      buffer.write(' \u2022 ${_formatReminder(idea.reminderAtUtc!)}');
+      buffer.write(' \u2022 ${formatReminder(idea.reminderAtUtc!)}');
     }
     if (playback.state == PlaybackState.error &&
         playback.currentIdeaId == idea.id) {
@@ -443,15 +425,6 @@ class _IdeaTile extends StatelessWidget {
     }
     return buffer.toString();
   }
-}
-
-String _formatReminder(DateTime reminderAtUtc) {
-  final local = reminderAtUtc.toLocal();
-  final day = local.day.toString().padLeft(2, '0');
-  final month = local.month.toString().padLeft(2, '0');
-  final hour = local.hour.toString().padLeft(2, '0');
-  final minute = local.minute.toString().padLeft(2, '0');
-  return 'Rappel le $day/$month à $hour:$minute';
 }
 
 PopupMenuItem<String> _menuItem({
@@ -500,168 +473,6 @@ class _ProgressBar extends StatelessWidget {
 ///
 /// La date choisie est validée comme future ; la permission de notification
 /// est demandée au moment du choix, avec explication en cas de refus.
-class ReminderSheet extends StatefulWidget {
-  const ReminderSheet({
-    super.key,
-    required this.idea,
-    required this.controller,
-    required this.reminders,
-  });
-
-  final Idea idea;
-  final IdeasController controller;
-  final ReminderService reminders;
-
-  @override
-  State<ReminderSheet> createState() => _ReminderSheetState();
-}
-
-class _ReminderSheetState extends State<ReminderSheet> {
-  bool _saving = false;
-  bool _permissionDenied = false;
-  String? _error;
-
-  @override
-  Widget build(BuildContext context) {
-    final nowLocal = DateTime.now();
-    final laterToday = ReminderPolicy.laterToday(nowLocal);
-    final tomorrow = ReminderPolicy.tomorrow(nowLocal);
-    final nextWeek = ReminderPolicy.nextWeek(nowLocal);
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Me rappeler',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              widget.idea.reminderAtUtc == null
-                  ? 'Aucun rappel pour cette idée.'
-                  : 'Rappel actuel : ${_formatReminder(widget.idea.reminderAtUtc!)}.',
-            ),
-            if (_error != null) ...[const SizedBox(height: 8), Text(_error!)],
-            if (_permissionDenied) ...[
-              const SizedBox(height: 8),
-              const Text(
-                'Notifications non autorisées : les rappels ne pourront pas '
-                's’afficher tant que l’autorisation n’est pas accordée dans '
-                'les réglages Android.',
-              ),
-            ],
-            const SizedBox(height: 16),
-            if (_saving)
-              const Center(child: CircularProgressIndicator())
-            else ...[
-              FilledButton.icon(
-                onPressed: laterToday == null
-                    ? null
-                    : () => _schedule(laterToday),
-                icon: const Icon(LucideIcons.moon),
-                label: const Text('Plus tard aujourd’hui (20h00)'),
-              ),
-              const SizedBox(height: 8),
-              FilledButton.icon(
-                onPressed: () => _schedule(tomorrow),
-                icon: const Icon(LucideIcons.sunrise),
-                label: const Text('Demain (9h00)'),
-              ),
-              const SizedBox(height: 8),
-              FilledButton.icon(
-                onPressed: () => _schedule(nextWeek),
-                icon: const Icon(LucideIcons.calendarClock),
-                label: const Text('Semaine prochaine'),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: _pickCustom,
-                icon: const Icon(LucideIcons.calendarPlus),
-                label: const Text('Choisir une date…'),
-              ),
-              if (widget.idea.reminderAtUtc != null) ...[
-                const SizedBox(height: 8),
-                TextButton.icon(
-                  onPressed: _cancel,
-                  icon: const Icon(LucideIcons.bellOff),
-                  label: const Text('Annuler le rappel'),
-                ),
-              ],
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _schedule(DateTime whenLocal) async {
-    setState(() {
-      _saving = true;
-      _error = null;
-      _permissionDenied = false;
-    });
-    try {
-      ReminderPolicy.validateFuture(whenLocal, DateTime.now());
-      final granted = await widget.reminders.requestPermission();
-      if (!granted) {
-        setState(() {
-          _saving = false;
-          _permissionDenied = true;
-        });
-        return;
-      }
-      await widget.controller.setReminder(
-        widget.idea.id,
-        whenLocal.toUtc(),
-        widget.reminders,
-      );
-      if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      setState(() {
-        _saving = false;
-        _error = e.toString();
-      });
-    }
-  }
-
-  Future<void> _pickCustom() async {
-    final now = DateTime.now();
-    final date = await showDatePicker(
-      context: context,
-      initialDate: now,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: now.add(const Duration(days: 365)),
-    );
-    if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (time == null || !mounted) return;
-    await _schedule(
-      DateTime(date.year, date.month, date.day, time.hour, time.minute),
-    );
-  }
-
-  Future<void> _cancel() async {
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    try {
-      await widget.controller.clearReminder(widget.idea.id, widget.reminders);
-      if (mounted) Navigator.of(context).pop();
-    } catch (e) {
-      setState(() {
-        _saving = false;
-        _error = e.toString();
-      });
-    }
-  }
-}
 
 /// Panneau de capture : un seul geste pour démarrer, un seul pour garder.
 class CaptureSheet extends StatefulWidget {

@@ -141,6 +141,7 @@ class _MurmurAppState extends State<MurmurApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Murmur',
       theme: MurmurTheme.light(),
       darkTheme: MurmurTheme.dark(),
