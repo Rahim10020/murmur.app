@@ -7,7 +7,7 @@ import '../../app/theme.dart';
 class MurmurNavBarDefaults {
   const MurmurNavBarDefaults._();
 
-  static const double height = 88;
+  static const double height = 82;
   static const double borderRadius = 999;
   static const double maxWidth = 240;
   static const double horizontalMargin = 24;
@@ -155,6 +155,7 @@ class _NavIcon extends StatelessWidget {
         child: selected
             ? CircleAvatar(
                 backgroundColor: selectedBackground,
+                radius: 28,
                 child: shownIcon,
               )
             : shownIcon,
