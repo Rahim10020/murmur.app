@@ -6,8 +6,10 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../app/appearance.dart';
 import '../../../app/text_styles.dart';
 import '../../../shared/widgets/murmur_button.dart';
+import '../../../shared/widgets/murmur_nav_bar.dart';
 import '../../capture/presentation/capture_controller.dart';
 import '../../capture/presentation/capture_sheet.dart';
+import '../../rediscovery/domain/rediscovery_policy.dart';
 import '../../rediscovery/presentation/rediscovery_session.dart';
 import '../../reminders/data/flutter_reminder_service.dart';
 import '../../reminders/presentation/reminder_sheet.dart';
@@ -104,41 +106,12 @@ class _IdeasPageState extends State<IdeasPage> {
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
+    final discoveryCount = RediscoveryPolicy.selectSession(
+      controller.ideas,
+      DateTime.now().toUtc(),
+    ).length;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Murmur'),
-        actions: [
-          IconButton(
-            tooltip: 'Redécouvrir des idées',
-            icon: const Icon(LucideIcons.history),
-            onPressed: () => openRediscoverySession(
-              context: context,
-              controller: widget.controller,
-              playback: widget.playback,
-              reminders: widget.reminders,
-              audioDir: widget.audioDir,
-            ),
-          ),
-          IconButton(
-            tooltip: 'Paramètres et sauvegarde',
-            icon: const Icon(LucideIcons.settings),
-            onPressed: () async {
-              await Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => SettingsPage(
-                    controller: widget.controller,
-                    reminders: widget.reminders,
-                    audioDir: widget.audioDir,
-                    safetyDir: widget.safetyDir,
-                    appearance: widget.appearance,
-                    onRestored: () => widget.controller.refresh(),
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Murmur')),
       body: switch (controller.state) {
         IdeasListState.initial || IdeasListState.loading => const Center(
           child: CircularProgressIndicator(),
@@ -207,16 +180,43 @@ class _IdeasPageState extends State<IdeasPage> {
                   },
                 ),
       },
-      floatingActionButton: SizedBox(
-        width: 72,
-        height: 72,
-        child: FloatingActionButton(
-          onPressed: _openCaptureSheet,
-          tooltip: 'Enregistrer une idée',
-          child: const Icon(
-            LucideIcons.mic,
-            size: 32,
-          ), // à ajuster en proportion
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            MurmurNavBarDefaults.horizontalMargin,
+            0,
+            MurmurNavBarDefaults.horizontalMargin,
+            MurmurNavBarDefaults.bottomMargin,
+          ),
+          child: MurmurNavBar(
+            onDiscover: _openDiscovery,
+            onRecord: _openCaptureSheet,
+            onSettings: _openSettings,
+            discoveryCount: discoveryCount,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openDiscovery() => openRediscoverySession(
+    context: context,
+    controller: widget.controller,
+    playback: widget.playback,
+    reminders: widget.reminders,
+    audioDir: widget.audioDir,
+  );
+
+  Future<void> _openSettings() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => SettingsPage(
+          controller: widget.controller,
+          reminders: widget.reminders,
+          audioDir: widget.audioDir,
+          safetyDir: widget.safetyDir,
+          appearance: widget.appearance,
+          onRestored: () => widget.controller.refresh(),
         ),
       ),
     );
