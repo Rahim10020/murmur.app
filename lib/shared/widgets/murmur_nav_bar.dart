@@ -189,7 +189,7 @@ class MurmurRecordButton extends StatelessWidget {
           height: MurmurNavBarDefaults.recordSize,
           child: Tooltip(
             message: 'Enregistrer une idée',
-            child: Icon(LucideIcons.mic, size: 26, color: MurmurColors.ink),
+            child: Icon(LucideIcons.mic, size: 32, color: MurmurColors.ink),
           ),
         ),
       ),
