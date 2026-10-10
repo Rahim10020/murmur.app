@@ -7,12 +7,14 @@ import '../../app/theme.dart';
 class MurmurNavBarDefaults {
   const MurmurNavBarDefaults._();
 
-  static const double height = 72;
+  static const double height = 88;
   static const double borderRadius = 999;
-  static const double horizontalMargin = 48;
+  static const double maxWidth = 280;
+  static const double horizontalMargin = 24;
   static const double bottomMargin = 16;
-  static const double recordSize = 56;
-  static const double iconSize = 24;
+  static const double recordSize = 66;
+  static const double iconSize = 32;
+  static const double itemGap = 28;
   static const double badgeFontSize = 11;
 }
 
@@ -40,35 +42,51 @@ class MurmurNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
+    // Hauteur stricte : en contraintes lâches, Container/Center occuperait
+    // tout l'espace restant et écraserait le body du Scaffold à 0.
+    return SizedBox(
       height: MurmurNavBarDefaults.height,
-      decoration: BoxDecoration(
-        color: scheme.surface,
-        borderRadius: BorderRadius.circular(MurmurNavBarDefaults.borderRadius),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: MurmurNavBarDefaults.maxWidth,
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _NavIcon(
-            tooltip: 'Redécouvrir des idées',
-            icon: LucideIcons.history,
-            onTap: onDiscover,
-            badgeCount: discoveryCount,
+          child: Container(
+            height: MurmurNavBarDefaults.height,
+            decoration: BoxDecoration(
+              color: scheme.surface,
+              borderRadius: BorderRadius.circular(
+                MurmurNavBarDefaults.borderRadius,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _NavIcon(
+                  tooltip: 'Redécouvrir des idées',
+                  icon: LucideIcons.history,
+                  onTap: onDiscover,
+                  badgeCount: discoveryCount,
+                ),
+                const SizedBox(width: MurmurNavBarDefaults.itemGap),
+                _RecordButton(onTap: onRecord),
+                const SizedBox(width: MurmurNavBarDefaults.itemGap),
+                _NavIcon(
+                  tooltip: 'Paramètres et sauvegarde',
+                  icon: LucideIcons.settings,
+                  onTap: onSettings,
+                ),
+              ],
+            ),
           ),
-          _RecordButton(onTap: onRecord),
-          _NavIcon(
-            tooltip: 'Paramètres et sauvegarde',
-            icon: LucideIcons.settings,
-            onTap: onSettings,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -93,6 +111,8 @@ class _NavIcon extends StatelessWidget {
     return IconButton(
       tooltip: tooltip,
       iconSize: MurmurNavBarDefaults.iconSize,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
       color: foreground,
       onPressed: onTap,
       icon: Badge(

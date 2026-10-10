@@ -103,5 +103,26 @@ void main() {
       final mic = tester.widget<Icon>(find.byIcon(LucideIcons.mic));
       expect(mic.color, MurmurColors.ink);
     });
+
+    testWidgets('pilule compacte : largeur plafonnée', (tester) async {
+      await _pumpBar(
+        tester,
+        onDiscover: () {},
+        onRecord: () {},
+        onSettings: () {},
+      );
+
+      final pill = find.descendant(
+        of: find.byType(MurmurNavBar),
+        matching: find.byWidgetPredicate(
+          (w) => w is Container && w.decoration is BoxDecoration,
+        ),
+      );
+      expect(pill, findsOneWidget);
+      expect(
+        tester.getSize(pill).width,
+        lessThanOrEqualTo(MurmurNavBarDefaults.maxWidth),
+      );
+    });
   });
 }
