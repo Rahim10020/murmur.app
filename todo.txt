@@ -2,10 +2,6 @@
     par l'utilisateur). on va pas utiliser d'icones. juste du texte de grand taille 
     et les boutons continuer ou retour. tu vas me trouver les meilleurs phrase marketing a mettre.
 
--- quand je veux renommer une idee, le cursor du champ utilise ma couleur 
-    primary de meme que je soulignement du bas. je ne veux pas ca. je veux que 
-    tu remplace ca par du blanc ou du noir selon le theme qu'on utilise.
-
 -- trouver les gros fichiers et faire un plan pour le refactor
 
 -- mettre en place deux langues : FR , ENG
