@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
+import '../../app/motion.dart';
 import '../../app/theme.dart';
 
 /// Valeurs par défaut centralisées de la navigation.
 class MurmurNavBarDefaults {
   const MurmurNavBarDefaults._();
 
-  static const double height = 82;
+  static const double height = 78;
   static const double borderRadius = 999;
   static const double maxWidth = 240;
   static const double horizontalMargin = 24;
@@ -126,7 +127,8 @@ class _NavIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final foreground = Theme.of(context).colorScheme.onSurface;
-    // Cercle plein derrière l'onglet actif (référence visuelle).
+    // Cercle plein derrière l'onglet actif, en fondu (pas d'apparition
+    // sèche). La couleur d'icône commute sous le fondu.
     final selectedBackground = dark ? MurmurColors.paper : MurmurColors.ink;
     final selectedForeground = dark ? MurmurColors.ink : MurmurColors.paper;
     final shownIcon = Icon(
@@ -152,13 +154,18 @@ class _NavIcon extends StatelessWidget {
         ),
         backgroundColor: MurmurColors.ink,
         textColor: MurmurColors.paper,
-        child: selected
-            ? CircleAvatar(
-                backgroundColor: selectedBackground,
-                radius: 26,
-                child: shownIcon,
-              )
-            : shownIcon,
+        child: AnimatedContainer(
+          duration: MurmurMotion.selection,
+          curve: MurmurMotion.curve,
+          width: 46,
+          height: 46,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: selected ? selectedBackground : Colors.transparent,
+          ),
+          child: shownIcon,
+        ),
       ),
     );
     return button;
@@ -177,22 +184,57 @@ class MurmurRecordButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(MurmurNavBarDefaults.recordRadius);
-    return Material(
-      color: MurmurColors.primary,
-      elevation: 4,
-      shadowColor: Colors.black.withValues(alpha: 0.3),
-      shape: RoundedRectangleBorder(borderRadius: radius),
-      child: InkWell(
-        borderRadius: radius,
-        onTap: onTap,
-        child: const SizedBox(
-          width: MurmurNavBarDefaults.recordSize,
-          height: MurmurNavBarDefaults.recordSize,
-          child: Tooltip(
-            message: 'Enregistrer une idée',
-            child: Icon(LucideIcons.mic, size: 32, color: MurmurColors.ink),
+    return _PressScale(
+      child: Material(
+        color: MurmurColors.primary,
+        elevation: 4,
+        shadowColor: Colors.black.withValues(alpha: 0.3),
+        shape: RoundedRectangleBorder(borderRadius: radius),
+        child: InkWell(
+          borderRadius: radius,
+          onTap: onTap,
+          child: const SizedBox(
+            width: MurmurNavBarDefaults.recordSize,
+            height: MurmurNavBarDefaults.recordSize,
+            child: Tooltip(
+              message: 'Enregistrer une idée',
+              child: Icon(LucideIcons.mic, size: 32, color: MurmurColors.ink),
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Écrasement à l'appui (120 ms, [MurmurMotion.press]).
+class _PressScale extends StatefulWidget {
+  const _PressScale({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<_PressScale> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (_pressed != value && mounted) setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _setPressed(true),
+      onTapUp: (_) => _setPressed(false),
+      onTapCancel: () => _setPressed(false),
+      child: AnimatedScale(
+        scale: _pressed ? MurmurMotion.pressScale : 1,
+        duration: MurmurMotion.press,
+        curve: MurmurMotion.curve,
+        child: widget.child,
       ),
     );
   }

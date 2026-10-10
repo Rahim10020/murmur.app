@@ -56,8 +56,18 @@ class _RediscoverySessionPageState extends State<RediscoverySessionPage> {
     super.dispose();
   }
 
-  void _onChanged() => setState(() {});
-  void _onPlayback() => setState(() {});
+  // Rebuild différé : voir IdeasPage._onChanged (transitions d'onglet).
+  void _onChanged() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  void _onPlayback() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -70,7 +70,9 @@ void main() {
       expect(openedSettings, 1);
     });
 
-    testWidgets('onglet actif marqué d’un cercle plein', (tester) async {
+    testWidgets('onglet actif : cercle en fondu (encre en clair)', (
+      tester,
+    ) async {
       await _pumpBar(
         tester,
         selectedIndex: 1,
@@ -79,14 +81,19 @@ void main() {
         onSettings: () {},
       );
 
-      final avatars = tester.widgetList<CircleAvatar>(
+      final circles = tester.widgetList<AnimatedContainer>(
         find.descendant(
           of: find.byType(MurmurNavBar),
-          matching: find.byType(CircleAvatar),
+          matching: find.byType(AnimatedContainer),
         ),
       );
-      expect(avatars, hasLength(1));
-      expect(avatars.single.backgroundColor, MurmurColors.ink);
+      final filled = circles.where((c) {
+        final decoration = c.decoration;
+        return decoration is BoxDecoration &&
+            decoration.shape == BoxShape.circle &&
+            decoration.color == MurmurColors.ink;
+      });
+      expect(filled, hasLength(1));
     });
 
     testWidgets('badge masqué si 0, affiché sinon', (tester) async {
@@ -170,6 +177,26 @@ void main() {
 
       await tester.tap(find.byIcon(LucideIcons.mic));
       expect(recorded, 1);
+    });
+
+    testWidgets('record : écrasement à l’appui', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: MurmurTheme.light(),
+          home: Scaffold(
+            body: Center(child: MurmurRecordButton(onTap: () {})),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: find.byType(MurmurRecordButton),
+          matching: find.byType(AnimatedScale),
+        ),
+        findsOneWidget,
+      );
     });
   });
 }

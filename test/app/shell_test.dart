@@ -204,6 +204,18 @@ void main() {
       expect(find.textContaining('Enregistrement'), findsWidgets);
     });
 
+    testWidgets('commutation : fondu puis ancien onglet masqué', (
+      tester,
+    ) async {
+      await _pumpShell(tester, ideas: [_idea('a')]);
+
+      await tester.tap(find.byIcon(LucideIcons.settings));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SettingsPage), findsOneWidget);
+      expect(find.byType(IdeasPage), findsNothing);
+    });
+
     testWidgets('badge : nombre d’idées à redécouvrir', (tester) async {
       await _pumpShell(tester, ideas: [_idea('a'), _idea('b')]);
 

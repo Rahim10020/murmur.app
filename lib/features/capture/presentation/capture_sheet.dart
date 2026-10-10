@@ -31,7 +31,12 @@ class _CaptureSheetState extends State<CaptureSheet> {
     super.dispose();
   }
 
-  void _onChanged() => setState(() {});
+  // Rebuild différé : voir IdeasPage._onChanged (transitions d'onglet).
+  void _onChanged() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -13,6 +13,7 @@ import '../features/reminders/data/flutter_reminder_service.dart';
 import '../features/settings/presentation/settings_page.dart';
 import '../shared/widgets/murmur_nav_bar.dart';
 import 'appearance.dart';
+import 'motion.dart';
 
 /// Coquille de navigation Murmur : bottom nav bar toujours visible.
 ///
@@ -105,31 +106,50 @@ class _MurmurShellState extends State<MurmurShell> {
         }
       },
       child: Scaffold(
-        body: IndexedStack(
-          index: _tab.index,
-          children: [
-            IdeasPage(
-              controller: widget.controller,
-              playback: widget.playback,
-              reminders: widget.reminders,
-              audioDir: widget.audioDir,
-              highlightedIdeaId: widget.highlightedIdeaId,
+        // Fondu entre onglets (états conservés via l'IndexedStack) ;
+        // la clé force la transition à chaque changement d'onglet.
+        body: AnimatedSwitcher(
+          duration: MurmurMotion.scaled(context, MurmurMotion.tabSwitch),
+          switchInCurve: MurmurMotion.curve,
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(
+                begin: MurmurMotion.tabStartScale,
+                end: 1,
+              ).animate(animation),
+              child: child,
             ),
-            RediscoverySessionPage(
-              controller: widget.controller,
-              playback: widget.playback,
-              reminders: widget.reminders,
-              audioDir: widget.audioDir,
+          ),
+          child: KeyedSubtree(
+            key: ValueKey(_tab),
+            child: IndexedStack(
+              index: _tab.index,
+              children: [
+                IdeasPage(
+                  controller: widget.controller,
+                  playback: widget.playback,
+                  reminders: widget.reminders,
+                  audioDir: widget.audioDir,
+                  highlightedIdeaId: widget.highlightedIdeaId,
+                ),
+                RediscoverySessionPage(
+                  controller: widget.controller,
+                  playback: widget.playback,
+                  reminders: widget.reminders,
+                  audioDir: widget.audioDir,
+                ),
+                SettingsPage(
+                  controller: widget.controller,
+                  reminders: widget.reminders,
+                  audioDir: widget.audioDir,
+                  safetyDir: widget.safetyDir,
+                  appearance: widget.appearance,
+                  onRestored: () => widget.controller.refresh(),
+                ),
+              ],
             ),
-            SettingsPage(
-              controller: widget.controller,
-              reminders: widget.reminders,
-              audioDir: widget.audioDir,
-              safetyDir: widget.safetyDir,
-              appearance: widget.appearance,
-              onRestored: () => widget.controller.refresh(),
-            ),
-          ],
+          ),
         ),
         bottomNavigationBar: SafeArea(
           child: Padding(

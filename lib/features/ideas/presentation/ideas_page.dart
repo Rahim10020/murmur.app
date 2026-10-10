@@ -56,10 +56,19 @@ class _IdeasPageState extends State<IdeasPage> {
     super.dispose();
   }
 
-  void _onChanged() => setState(() {});
+  // Rebuild différé : plusieurs écrans peuvent écouter pendant une
+  // transition d'onglet (AnimatedSwitcher), où un setState immédiat
+  // pendant le build est interdit.
+  void _onChanged() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   void _onHighlight() {
-    _revealHighlight(0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _revealHighlight(0);
+    });
   }
 
   void _revealHighlight(int attempt) {
