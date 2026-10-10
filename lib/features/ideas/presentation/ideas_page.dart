@@ -6,6 +6,7 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 import '../../../app/appearance.dart';
 import '../../../app/text_styles.dart';
 import '../../../shared/widgets/murmur_button.dart';
+import '../../../shared/widgets/murmur_menu.dart';
 import '../../capture/presentation/capture_controller.dart';
 import '../../rediscovery/presentation/rediscovery_session.dart';
 import '../../reminders/data/flutter_reminder_service.dart';
@@ -370,56 +371,46 @@ class _IdeaTile extends StatelessWidget {
                 ),
                 onPressed: () => onRemind(idea),
               ),
-              PopupMenuButton<String>(
-                icon: const Icon(LucideIcons.ellipsis),
-                onSelected: (value) {
-                  switch (value) {
-                    case 'rename':
-                      onRename(idea);
-                    case 'inProgress':
-                      onStatus(idea, IdeaStatus.inProgress);
-                    case 'done':
-                      onStatus(idea, IdeaStatus.done);
-                    case 'archive':
-                      onStatus(idea, IdeaStatus.archived);
-                    case 'review':
-                      onStatus(idea, IdeaStatus.toReview);
-                    case 'delete':
-                      onDelete(idea);
-                  }
-                },
-                itemBuilder: (context) => [
-                  _menuItem(
-                    value: 'rename',
-                    icon: LucideIcons.pencil,
-                    label: 'Renommer',
+              Builder(
+                builder: (rowContext) => IconButton(
+                  tooltip: 'Actions',
+                  icon: const Icon(LucideIcons.ellipsis),
+                  onPressed: () => showMurmurMenu(
+                    anchorContext: rowContext,
+                    items: [
+                      MurmurMenuItem(
+                        icon: LucideIcons.pencil,
+                        label: 'Renommer',
+                        onTap: () => onRename(idea),
+                      ),
+                      MurmurMenuItem(
+                        icon: LucideIcons.hourglass,
+                        label: 'Commencer',
+                        onTap: () => onStatus(idea, IdeaStatus.inProgress),
+                      ),
+                      MurmurMenuItem(
+                        icon: LucideIcons.check,
+                        label: 'Marquer terminée',
+                        onTap: () => onStatus(idea, IdeaStatus.done),
+                      ),
+                      MurmurMenuItem(
+                        icon: LucideIcons.archive,
+                        label: 'Archiver',
+                        onTap: () => onStatus(idea, IdeaStatus.archived),
+                      ),
+                      MurmurMenuItem(
+                        icon: LucideIcons.rotateCcw,
+                        label: 'Remettre à revoir',
+                        onTap: () => onStatus(idea, IdeaStatus.toReview),
+                      ),
+                      MurmurMenuItem(
+                        icon: LucideIcons.trash,
+                        label: 'Supprimer',
+                        onTap: () => onDelete(idea),
+                      ),
+                    ],
                   ),
-                  _menuItem(
-                    value: 'inProgress',
-                    icon: LucideIcons.hourglass,
-                    label: 'Commencer',
-                  ),
-                  _menuItem(
-                    value: 'done',
-                    icon: LucideIcons.check,
-                    label: 'Marquer terminée',
-                  ),
-                  _menuItem(
-                    value: 'archive',
-                    icon: LucideIcons.archive,
-                    label: 'Archiver',
-                  ),
-                  _menuItem(
-                    value: 'review',
-                    icon: LucideIcons.rotateCcw,
-                    label: 'Remettre à revoir',
-                  ),
-                  _menuItem(
-                    value: 'delete',
-                    icon: LucideIcons.trash,
-                    label: 'Supprimer',
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -459,17 +450,6 @@ class _IdeaTile extends StatelessWidget {
     }
     return buffer.toString();
   }
-}
-
-PopupMenuItem<String> _menuItem({
-  required String value,
-  required IconData icon,
-  required String label,
-}) {
-  return PopupMenuItem<String>(
-    value: value,
-    child: Row(children: [Icon(icon), const SizedBox(width: 12), Text(label)]),
-  );
 }
 
 class _ProgressBar extends StatelessWidget {
