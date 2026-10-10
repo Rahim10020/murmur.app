@@ -155,7 +155,7 @@ class _NavIcon extends StatelessWidget {
         child: selected
             ? CircleAvatar(
                 backgroundColor: selectedBackground,
-                radius: 28,
+                radius: 26,
                 child: shownIcon,
               )
             : shownIcon,
