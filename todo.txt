@@ -10,6 +10,3 @@
     je reclique une seconde fois ca viens et le progress bouge. check et dis 
     moi ce qui cause le probleme.
 
--- pour la page de decouverte , tu peux juste mettre rien a redecouvrir pour le moment 
-    pas besoin de mettre les options : commencer a bosser dessus, 
-    me rappeler plus tard et les autres..

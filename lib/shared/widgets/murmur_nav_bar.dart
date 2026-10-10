@@ -8,16 +8,16 @@ import '../../app/theme.dart';
 class MurmurNavBarDefaults {
   const MurmurNavBarDefaults._();
 
-  static const double height = 78;
+  static const double height = 68;
   static const double borderRadius = 999;
-  static const double maxWidth = 240;
+  static const double maxWidth = 238;
   static const double horizontalMargin = 24;
   static const double bottomMargin = 16;
   static const double recordSize = 70;
   static const double recordRadius = 20;
-  static const double recordGap = 8;
+  static const double recordGap = 12;
   static const double iconSize = 32;
-  static const double itemGap = 24;
+  static const double itemGap = 16;
   static const double badgeFontSize = 11;
 }
 
@@ -50,7 +50,6 @@ class MurmurNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     // Hauteur stricte : en contraintes lâches, un expansible occuperait
     // tout l'espace restant et écraserait le body du Scaffold à 0.
     return SizedBox(
@@ -60,27 +59,15 @@ class MurmurNavBar extends StatelessWidget {
           constraints: const BoxConstraints(
             maxWidth: MurmurNavBarDefaults.maxWidth,
           ),
-          child: Container(
+          child: SizedBox(
             height: MurmurNavBarDefaults.height,
-            decoration: BoxDecoration(
-              color: scheme.surface,
-              borderRadius: BorderRadius.circular(
-                MurmurNavBarDefaults.borderRadius,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
+
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _NavIcon(
                   tooltip: 'Accueil',
-                  icon: LucideIcons.house,
+                  icon: LucideIcons.audioLines,
                   selected: selectedIndex == 0,
                   onTap: onHome,
                 ),
@@ -157,8 +144,8 @@ class _NavIcon extends StatelessWidget {
         child: AnimatedContainer(
           duration: MurmurMotion.selection,
           curve: MurmurMotion.curve,
-          width: 46,
-          height: 46,
+          width: 60,
+          height: 60,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,

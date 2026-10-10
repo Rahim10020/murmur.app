@@ -136,7 +136,6 @@ class _MurmurShellState extends State<MurmurShell> {
                 RediscoverySessionPage(
                   controller: widget.controller,
                   playback: widget.playback,
-                  reminders: widget.reminders,
                   audioDir: widget.audioDir,
                 ),
                 SettingsPage(
