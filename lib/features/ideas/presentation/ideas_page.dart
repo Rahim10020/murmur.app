@@ -3,43 +3,31 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
-import '../../../app/appearance.dart';
 import '../../../app/text_styles.dart';
 import '../../../shared/widgets/murmur_button.dart';
-import '../../../shared/widgets/murmur_nav_bar.dart';
-import '../../capture/presentation/capture_controller.dart';
-import '../../capture/presentation/capture_sheet.dart';
-import '../../rediscovery/domain/rediscovery_policy.dart';
-import '../../rediscovery/presentation/rediscovery_session.dart';
 import '../../reminders/data/flutter_reminder_service.dart';
 import '../../reminders/presentation/reminder_sheet.dart';
-import '../../settings/presentation/settings_page.dart';
 import '../domain/idea.dart';
 import 'idea_tile.dart';
 import 'ideas_controller.dart';
 import 'playback_controller.dart';
 
-/// Écran liste des idées : lecture, rappels, statuts, capture.
+/// Onglet liste des idées : lecture, rappels, statuts.
+/// La navigation (bottom bar persistante) vit dans le shell.
 class IdeasPage extends StatefulWidget {
   const IdeasPage({
     super.key,
     required this.controller,
-    required this.capture,
     required this.playback,
     required this.reminders,
     required this.audioDir,
-    required this.safetyDir,
-    required this.appearance,
     required this.highlightedIdeaId,
   });
 
   final IdeasController controller;
-  final CaptureController capture;
   final PlaybackController playback;
   final ReminderService reminders;
   final Directory audioDir;
-  final Directory safetyDir;
-  final AppearanceController appearance;
 
   /// ID d'idée à mettre en avant (deep-link depuis une notification).
   final ValueNotifier<String?> highlightedIdeaId;
@@ -55,7 +43,6 @@ class _IdeasPageState extends State<IdeasPage> {
   void initState() {
     super.initState();
     widget.controller.addListener(_onChanged);
-    widget.capture.addListener(_onChanged);
     widget.playback.addListener(_onChanged);
     widget.highlightedIdeaId.addListener(_onHighlight);
     widget.controller.refresh();
@@ -64,7 +51,6 @@ class _IdeasPageState extends State<IdeasPage> {
   @override
   void dispose() {
     widget.controller.removeListener(_onChanged);
-    widget.capture.removeListener(_onChanged);
     widget.playback.removeListener(_onChanged);
     widget.highlightedIdeaId.removeListener(_onHighlight);
     super.dispose();
@@ -106,10 +92,6 @@ class _IdeasPageState extends State<IdeasPage> {
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
-    final discoveryCount = RediscoveryPolicy.selectSession(
-      controller.ideas,
-      DateTime.now().toUtc(),
-    ).length;
     return Scaffold(
       appBar: AppBar(title: const Text('Murmur')),
       body: switch (controller.state) {
@@ -180,57 +162,6 @@ class _IdeasPageState extends State<IdeasPage> {
                   },
                 ),
       },
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            MurmurNavBarDefaults.horizontalMargin,
-            0,
-            MurmurNavBarDefaults.horizontalMargin,
-            MurmurNavBarDefaults.bottomMargin,
-          ),
-          child: MurmurNavBar(
-            onDiscover: _openDiscovery,
-            onRecord: _openCaptureSheet,
-            onSettings: _openSettings,
-            discoveryCount: discoveryCount,
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _openDiscovery() => openRediscoverySession(
-    context: context,
-    controller: widget.controller,
-    playback: widget.playback,
-    reminders: widget.reminders,
-    audioDir: widget.audioDir,
-  );
-
-  Future<void> _openSettings() async {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => SettingsPage(
-          controller: widget.controller,
-          reminders: widget.reminders,
-          audioDir: widget.audioDir,
-          safetyDir: widget.safetyDir,
-          appearance: widget.appearance,
-          onRestored: () => widget.controller.refresh(),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openCaptureSheet() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isDismissible: true,
-      enableDrag: false,
-      builder: (_) => CaptureSheet(
-        capture: widget.capture,
-        onSaved: () => widget.controller.refresh(),
-      ),
     );
   }
 

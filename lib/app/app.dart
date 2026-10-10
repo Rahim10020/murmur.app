@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../features/ideas/presentation/ideas_page.dart';
 import '../features/reminders/data/flutter_reminder_service.dart';
 import 'appearance.dart';
 import 'bootstrap.dart';
+import 'shell.dart';
 import 'theme.dart';
 
 /// Racine applicative Murmur : assemble le périmètre initialisé par
@@ -86,7 +86,7 @@ class _MurmurAppState extends State<MurmurApp> {
               )
             : _scope == null
             ? const Scaffold(body: Center(child: CircularProgressIndicator()))
-            : IdeasPage(
+            : MurmurShell(
                 controller: _scope!.ideas,
                 capture: _scope!.capture,
                 playback: _scope!.playback,

@@ -3,20 +3,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
-import 'package:murmur/app/appearance.dart';
-import 'package:murmur/features/capture/data/recorder_backend.dart';
-import 'package:murmur/features/capture/data/recording_service.dart';
-import 'package:murmur/features/capture/presentation/capture_controller.dart';
-import 'package:murmur/features/ideas/data/idea_database.dart';
 import 'package:murmur/features/ideas/data/player_backend.dart';
-import 'package:murmur/features/ideas/data/sqflite_idea_repository.dart';
 import 'package:murmur/features/ideas/domain/idea.dart';
 import 'package:murmur/features/ideas/domain/idea_repository.dart';
 import 'package:murmur/features/ideas/presentation/ideas_controller.dart';
 import 'package:murmur/features/ideas/presentation/ideas_page.dart';
 import 'package:murmur/features/ideas/presentation/playback_controller.dart';
 import 'package:murmur/features/reminders/data/flutter_reminder_service.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:murmur/shared/widgets/murmur_nav_bar.dart';
 
 class FakeIdeaRepository implements IdeaRepository {
   FakeIdeaRepository({this.ideas = const <Idea>[], this.shouldFail = false});
@@ -47,25 +41,6 @@ class FakeIdeaRepository implements IdeaRepository {
 
   @override
   Future<void> replaceAll(List<Idea> ideas) async {}
-}
-
-class FakeRecorderBackend implements RecorderBackend {
-  @override
-  Future<void> cancel() async {}
-
-  @override
-  Future<void> dispose() async {}
-
-  @override
-  Future<bool> hasPermission() async => true;
-
-  @override
-  Future<void> start({required String path}) async {
-    await File(path).writeAsBytes(<int>[0]);
-  }
-
-  @override
-  Future<void> stop() async {}
 }
 
 class FakeReminderService implements ReminderService {
@@ -144,35 +119,23 @@ Idea _idea(String id) {
 
 class _Fixtures {
   _Fixtures({
-    required this.db,
     required this.audioDir,
     required this.ideas,
-    required this.capture,
     required this.playback,
     required this.reminders,
-    required this.appearance,
     required this.highlightedIdeaId,
-    required this.service,
   });
 
-  final Database db;
   final Directory audioDir;
   final IdeasController ideas;
-  final CaptureController capture;
   final PlaybackController playback;
   final ReminderService reminders;
-  final AppearanceController appearance;
   final ValueNotifier<String?> highlightedIdeaId;
-  final RecordingService service;
 
   Future<void> dispose() async {
     highlightedIdeaId.dispose();
     ideas.dispose();
-    capture.dispose();
     playback.dispose();
-    appearance.dispose();
-    await service.dispose();
-    await db.close();
     if (await audioDir.exists()) {
       await audioDir.delete(recursive: true);
     }
@@ -187,25 +150,15 @@ Future<_Fixtures> _setUpFixtures(
   bool shouldFail = false,
 }) async {
   final fixtures = await tester.runAsync(() async {
-    final db = await IdeaDatabase.open(path: inMemoryDatabasePath);
     final audioDir = await Directory.systemTemp.createTemp('murmur-page-');
-    final service = RecordingService(
-      repository: SqfliteIdeaRepository(db),
-      backend: FakeRecorderBackend(),
-      audioDirectoryProvider: () async => audioDir,
-    );
     return _Fixtures(
-      db: db,
       audioDir: audioDir,
       ideas: IdeasController(
         FakeIdeaRepository(ideas: ideas, shouldFail: shouldFail),
       ),
-      capture: CaptureController(service),
       playback: PlaybackController(FakePlayerBackend()),
       reminders: FakeReminderService(),
-      appearance: AppearanceController(store: MemoryThemeModeStore()),
       highlightedIdeaId: ValueNotifier<String?>(null),
-      service: service,
     );
   });
   return fixtures!;
@@ -216,12 +169,9 @@ Future<void> _pumpPage(WidgetTester tester, _Fixtures f) async {
     MaterialApp(
       home: IdeasPage(
         controller: f.ideas,
-        capture: f.capture,
         playback: f.playback,
         reminders: f.reminders,
         audioDir: f.audioDir,
-        safetyDir: f.audioDir,
-        appearance: f.appearance,
         highlightedIdeaId: f.highlightedIdeaId,
       ),
     ),
@@ -231,13 +181,8 @@ Future<void> _pumpPage(WidgetTester tester, _Fixtures f) async {
 }
 
 void main() {
-  setUpAll(() {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  });
-
   group('IdeasPage', () {
-    testWidgets('état vide + bouton micro (Lucide)', (tester) async {
+    testWidgets('état vide simplifié (icône + texte court)', (tester) async {
       final f = await _setUpFixtures(tester);
       addTearDown(() => tester.runAsync(f.dispose));
       await _pumpPage(tester, f);
@@ -245,8 +190,10 @@ void main() {
       expect(find.textContaining('Aucune idée'), findsOneWidget);
       expect(find.byIcon(LucideIcons.audioLines), findsOneWidget);
       expect(find.textContaining('Appuyez sur le micro'), findsNothing);
-      expect(find.byIcon(LucideIcons.mic), findsOneWidget);
-      expect(find.byIcon(LucideIcons.history), findsOneWidget);
+      // La navigation vit dans le shell, pas dans la page.
+      expect(find.byIcon(LucideIcons.mic), findsNothing);
+      expect(find.byIcon(LucideIcons.history), findsNothing);
+      expect(find.byType(MurmurNavBar), findsNothing);
     });
 
     testWidgets('liste les idées avec lecture et menu', (tester) async {
