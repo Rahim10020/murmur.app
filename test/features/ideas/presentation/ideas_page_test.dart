@@ -243,6 +243,8 @@ void main() {
       await _pumpPage(tester, f);
 
       expect(find.textContaining('Aucune idée'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.audioLines), findsOneWidget);
+      expect(find.textContaining('Appuyez sur le micro'), findsNothing);
       expect(find.byIcon(LucideIcons.mic), findsOneWidget);
       expect(find.byIcon(LucideIcons.history), findsOneWidget);
     });

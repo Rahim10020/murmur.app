@@ -162,13 +162,26 @@ class _IdeasPageState extends State<IdeasPage> {
         ),
         IdeasListState.loaded =>
           controller.ideas.isEmpty
-              ? const Center(
+              ? Center(
                   child: Padding(
-                    padding: EdgeInsets.all(54),
-                    child: Text(
-                      'Aucune idée pour le moment.\nAppuyez sur le micro pour capturer votre première idée.',
-                      textAlign: TextAlign.center,
-                      style: MurmurTextStyles.paragraph,
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          LucideIcons.audioLines,
+                          size: 88,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.35),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Aucune idée pour le moment',
+                          textAlign: TextAlign.center,
+                          style: MurmurTextStyles.caption,
+                        ),
+                      ],
                     ),
                   ),
                 )
