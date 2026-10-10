@@ -3,37 +3,45 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../../app/theme.dart';
 
-/// Valeurs par défaut centralisées de la barre de navigation.
+/// Valeurs par défaut centralisées de la navigation.
 class MurmurNavBarDefaults {
   const MurmurNavBarDefaults._();
 
   static const double height = 88;
   static const double borderRadius = 999;
-  static const double maxWidth = 280;
+  static const double maxWidth = 240;
   static const double horizontalMargin = 24;
   static const double bottomMargin = 16;
-  static const double recordSize = 66;
+  static const double recordSize = 70;
+  static const double recordRadius = 20;
+  static const double recordGap = 8;
   static const double iconSize = 32;
-  static const double itemGap = 28;
+  static const double itemGap = 24;
   static const double badgeFontSize = 11;
 }
 
-/// Barre de navigation flottante Murmur (pilule centrée).
+/// Onglets de la barre : accueil, découverte, paramètres.
+enum MurmurNavTab { home, discovery, settings }
+
+/// Barre de navigation flottante Murmur (pilule compacte centrée).
 ///
-/// 3 actions : Découverte (avec badge du nombre d'idées à redécouvrir,
-/// masqué si 0), Enregistrer (cercle jaune primary, action principale),
-/// Paramètres. Fond surface + ombre, aucun dégradé.
+/// 3 onglets : l'actif est marqué d'un cercle plein (encre en clair,
+/// blanc en sombre). Le record est un bouton détaché séparé
+/// ([MurmurRecordButton]). Fond surface + ombre, aucun dégradé.
 class MurmurNavBar extends StatelessWidget {
   const MurmurNavBar({
     super.key,
+    required this.selectedIndex,
+    required this.onHome,
     required this.onDiscover,
-    required this.onRecord,
     required this.onSettings,
     this.discoveryCount = 0,
   });
 
+  /// Index de l'onglet actif (0 = accueil, 1 = découverte, 2 = paramètres).
+  final int selectedIndex;
+  final VoidCallback onHome;
   final VoidCallback onDiscover;
-  final VoidCallback onRecord;
   final VoidCallback onSettings;
 
   /// Nombre d'idées éligibles à la redécouverte (badge, masqué si 0).
@@ -42,7 +50,7 @@ class MurmurNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    // Hauteur stricte : en contraintes lâches, Container/Center occuperait
+    // Hauteur stricte : en contraintes lâches, un expansible occuperait
     // tout l'espace restant et écraserait le body du Scaffold à 0.
     return SizedBox(
       height: MurmurNavBarDefaults.height,
@@ -70,17 +78,24 @@ class MurmurNavBar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _NavIcon(
+                  tooltip: 'Accueil',
+                  icon: LucideIcons.house,
+                  selected: selectedIndex == 0,
+                  onTap: onHome,
+                ),
+                const SizedBox(width: MurmurNavBarDefaults.itemGap),
+                _NavIcon(
                   tooltip: 'Redécouvrir des idées',
                   icon: LucideIcons.history,
+                  selected: selectedIndex == 1,
                   onTap: onDiscover,
                   badgeCount: discoveryCount,
                 ),
                 const SizedBox(width: MurmurNavBarDefaults.itemGap),
-                _RecordButton(onTap: onRecord),
-                const SizedBox(width: MurmurNavBarDefaults.itemGap),
                 _NavIcon(
                   tooltip: 'Paramètres et sauvegarde',
                   icon: LucideIcons.settings,
+                  selected: selectedIndex == 2,
                   onTap: onSettings,
                 ),
               ],
@@ -96,19 +111,30 @@ class _NavIcon extends StatelessWidget {
   const _NavIcon({
     required this.tooltip,
     required this.icon,
+    required this.selected,
     required this.onTap,
     this.badgeCount = 0,
   });
 
   final String tooltip;
   final IconData icon;
+  final bool selected;
   final VoidCallback onTap;
   final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final foreground = Theme.of(context).colorScheme.onSurface;
-    return IconButton(
+    // Cercle plein derrière l'onglet actif (référence visuelle).
+    final selectedBackground = dark ? MurmurColors.paper : MurmurColors.ink;
+    final selectedForeground = dark ? MurmurColors.ink : MurmurColors.paper;
+    final shownIcon = Icon(
+      icon,
+      size: MurmurNavBarDefaults.iconSize,
+      color: selected ? selectedForeground : foreground,
+    );
+    final button = IconButton(
       tooltip: tooltip,
       iconSize: MurmurNavBarDefaults.iconSize,
       padding: EdgeInsets.zero,
@@ -126,26 +152,37 @@ class _NavIcon extends StatelessWidget {
         ),
         backgroundColor: MurmurColors.ink,
         textColor: MurmurColors.paper,
-        child: Icon(icon),
+        child: selected
+            ? CircleAvatar(
+                backgroundColor: selectedBackground,
+                child: shownIcon,
+              )
+            : shownIcon,
       ),
     );
+    return button;
   }
 }
 
-class _RecordButton extends StatelessWidget {
-  const _RecordButton({required this.onTap});
+/// Bouton record détaché : carré arrondi jaune, micro encre.
+///
+/// Placé à droite de la pilule (comme la référence), mêmes hauteur et
+/// ombre. Tailles réglables dans [MurmurNavBarDefaults].
+class MurmurRecordButton extends StatelessWidget {
+  const MurmurRecordButton({super.key, required this.onTap});
 
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(MurmurNavBarDefaults.recordRadius);
     return Material(
       color: MurmurColors.primary,
-      shape: const CircleBorder(),
       elevation: 4,
       shadowColor: Colors.black.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(borderRadius: radius),
       child: InkWell(
-        customBorder: const CircleBorder(),
+        borderRadius: radius,
         onTap: onTap,
         child: const SizedBox(
           width: MurmurNavBarDefaults.recordSize,

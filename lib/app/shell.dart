@@ -16,10 +16,11 @@ import 'appearance.dart';
 
 /// Coquille de navigation Murmur : bottom nav bar toujours visible.
 ///
-/// Onglets : 0 = idées, 1 = découverte, 2 = paramètres ([IndexedStack],
-/// états conservés). Le bouton central ouvre la feuille de capture en
-/// modal par-dessus. Aucun bouton retour dans les pages : on circule
-/// uniquement via la barre ; le retour système revient aux idées.
+/// Onglets ([MurmurNavTab], [IndexedStack], états conservés) : accueil,
+/// découverte, paramètres. Le record est un bouton détaché à droite de la
+/// pilule et ouvre la feuille de capture en modal par-dessus. Aucun bouton
+/// retour dans les pages : on circule uniquement via la barre ; le retour
+/// système revient à l'accueil.
 class MurmurShell extends StatefulWidget {
   const MurmurShell({
     super.key,
@@ -47,7 +48,7 @@ class MurmurShell extends StatefulWidget {
 }
 
 class _MurmurShellState extends State<MurmurShell> {
-  int _tab = 0;
+  MurmurNavTab _tab = MurmurNavTab.home;
 
   @override
   void initState() {
@@ -73,8 +74,8 @@ class _MurmurShellState extends State<MurmurShell> {
 
   void _onHighlight() {
     final id = widget.highlightedIdeaId.value;
-    if (id != null && _tab != 0 && mounted) {
-      setState(() => _tab = 0);
+    if (id != null && _tab != MurmurNavTab.home && mounted) {
+      setState(() => _tab = MurmurNavTab.home);
     }
   }
 
@@ -97,15 +98,15 @@ class _MurmurShellState extends State<MurmurShell> {
       DateTime.now().toUtc(),
     ).length;
     return PopScope(
-      canPop: _tab == 0,
+      canPop: _tab == MurmurNavTab.home,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && _tab != 0 && mounted) {
-          setState(() => _tab = 0);
+        if (!didPop && _tab != MurmurNavTab.home && mounted) {
+          setState(() => _tab = MurmurNavTab.home);
         }
       },
       child: Scaffold(
         body: IndexedStack(
-          index: _tab,
+          index: _tab.index,
           children: [
             IdeasPage(
               controller: widget.controller,
@@ -138,11 +139,21 @@ class _MurmurShellState extends State<MurmurShell> {
               MurmurNavBarDefaults.horizontalMargin,
               MurmurNavBarDefaults.bottomMargin,
             ),
-            child: MurmurNavBar(
-              onDiscover: () => setState(() => _tab = 1),
-              onRecord: _openCaptureSheet,
-              onSettings: () => setState(() => _tab = 2),
-              discoveryCount: discoveryCount,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                MurmurNavBar(
+                  selectedIndex: _tab.index,
+                  onHome: () => setState(() => _tab = MurmurNavTab.home),
+                  onDiscover: () =>
+                      setState(() => _tab = MurmurNavTab.discovery),
+                  onSettings: () =>
+                      setState(() => _tab = MurmurNavTab.settings),
+                  discoveryCount: discoveryCount,
+                ),
+                const SizedBox(width: MurmurNavBarDefaults.recordGap),
+                MurmurRecordButton(onTap: _openCaptureSheet),
+              ],
             ),
           ),
         ),

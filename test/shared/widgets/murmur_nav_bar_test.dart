@@ -6,8 +6,9 @@ import 'package:murmur/shared/widgets/murmur_nav_bar.dart';
 
 Future<void> _pumpBar(
   WidgetTester tester, {
+  int selectedIndex = 0,
+  required VoidCallback onHome,
   required VoidCallback onDiscover,
-  required VoidCallback onRecord,
   required VoidCallback onSettings,
   int discoveryCount = 0,
 }) async {
@@ -17,8 +18,9 @@ Future<void> _pumpBar(
       home: Scaffold(
         body: const SizedBox.shrink(),
         bottomNavigationBar: MurmurNavBar(
+          selectedIndex: selectedIndex,
+          onHome: onHome,
           onDiscover: onDiscover,
-          onRecord: onRecord,
           onSettings: onSettings,
           discoveryCount: discoveryCount,
         ),
@@ -30,45 +32,68 @@ Future<void> _pumpBar(
 
 void main() {
   group('MurmurNavBar', () {
-    testWidgets('affiche les 3 actions avec icônes Lucide', (tester) async {
+    testWidgets('pilule : accueil, découverte, paramètres (Lucide)', (
+      tester,
+    ) async {
       await _pumpBar(
         tester,
+        onHome: () {},
         onDiscover: () {},
-        onRecord: () {},
         onSettings: () {},
       );
 
+      expect(find.byIcon(LucideIcons.house), findsOneWidget);
       expect(find.byIcon(LucideIcons.history), findsOneWidget);
-      expect(find.byIcon(LucideIcons.mic), findsOneWidget);
       expect(find.byIcon(LucideIcons.settings), findsOneWidget);
+      // Le record est détaché, hors pilule.
+      expect(find.byIcon(LucideIcons.mic), findsNothing);
     });
 
-    testWidgets('chaque action déclenche son callback', (tester) async {
+    testWidgets('chaque onglet déclenche son callback', (tester) async {
+      var home = 0;
       var discovered = 0;
-      var recorded = 0;
       var openedSettings = 0;
       await _pumpBar(
         tester,
+        onHome: () => home++,
         onDiscover: () => discovered++,
-        onRecord: () => recorded++,
         onSettings: () => openedSettings++,
       );
 
+      await tester.tap(find.byIcon(LucideIcons.house));
       await tester.tap(find.byIcon(LucideIcons.history));
-      await tester.tap(find.byIcon(LucideIcons.mic));
       await tester.tap(find.byIcon(LucideIcons.settings));
       await tester.pump();
 
+      expect(home, 1);
       expect(discovered, 1);
-      expect(recorded, 1);
       expect(openedSettings, 1);
+    });
+
+    testWidgets('onglet actif marqué d’un cercle plein', (tester) async {
+      await _pumpBar(
+        tester,
+        selectedIndex: 1,
+        onHome: () {},
+        onDiscover: () {},
+        onSettings: () {},
+      );
+
+      final avatars = tester.widgetList<CircleAvatar>(
+        find.descendant(
+          of: find.byType(MurmurNavBar),
+          matching: find.byType(CircleAvatar),
+        ),
+      );
+      expect(avatars, hasLength(1));
+      expect(avatars.single.backgroundColor, MurmurColors.ink);
     });
 
     testWidgets('badge masqué si 0, affiché sinon', (tester) async {
       await _pumpBar(
         tester,
+        onHome: () {},
         onDiscover: () {},
-        onRecord: () {},
         onSettings: () {},
         discoveryCount: 0,
       );
@@ -76,8 +101,8 @@ void main() {
 
       await _pumpBar(
         tester,
+        onHome: () {},
         onDiscover: () {},
-        onRecord: () {},
         onSettings: () {},
         discoveryCount: 3,
       );
@@ -85,37 +110,22 @@ void main() {
       expect(find.text('3'), findsOneWidget);
     });
 
-    testWidgets('bouton record : cercle jaune, micro encre', (tester) async {
-      await _pumpBar(
-        tester,
-        onDiscover: () {},
-        onRecord: () {},
-        onSettings: () {},
-      );
-
-      final materials = tester.widgetList<Material>(
-        find.descendant(
-          of: find.byType(MurmurNavBar),
-          matching: find.byType(Material),
-        ),
-      );
-      expect(materials.any((m) => m.color == MurmurColors.primary), isTrue);
-      final mic = tester.widget<Icon>(find.byIcon(LucideIcons.mic));
-      expect(mic.color, MurmurColors.ink);
-    });
-
     testWidgets('pilule compacte : largeur plafonnée', (tester) async {
       await _pumpBar(
         tester,
+        onHome: () {},
         onDiscover: () {},
-        onRecord: () {},
         onSettings: () {},
       );
 
       final pill = find.descendant(
         of: find.byType(MurmurNavBar),
         matching: find.byWidgetPredicate(
-          (w) => w is Container && w.decoration is BoxDecoration,
+          (w) =>
+              w is Container &&
+              w.decoration is BoxDecoration &&
+              (w.decoration! as BoxDecoration).borderRadius ==
+                  BorderRadius.circular(MurmurNavBarDefaults.borderRadius),
         ),
       );
       expect(pill, findsOneWidget);
@@ -123,6 +133,43 @@ void main() {
         tester.getSize(pill).width,
         lessThanOrEqualTo(MurmurNavBarDefaults.maxWidth),
       );
+    });
+  });
+
+  group('MurmurRecordButton', () {
+    testWidgets('carré jaune, micro encre, callback', (tester) async {
+      var recorded = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: MurmurTheme.light(),
+          home: Scaffold(
+            body: Center(child: MurmurRecordButton(onTap: () => recorded++)),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.byIcon(LucideIcons.mic), findsOneWidget);
+      final mic = tester.widget<Icon>(find.byIcon(LucideIcons.mic));
+      expect(mic.color, MurmurColors.ink);
+
+      final material = tester.widget<Material>(
+        find
+            .descendant(
+              of: find.byType(MurmurRecordButton),
+              matching: find.byType(Material),
+            )
+            .first,
+      );
+      expect(material.color, MurmurColors.primary);
+      final shape = material.shape as RoundedRectangleBorder;
+      expect(
+        shape.borderRadius,
+        BorderRadius.circular(MurmurNavBarDefaults.recordRadius),
+      );
+
+      await tester.tap(find.byIcon(LucideIcons.mic));
+      expect(recorded, 1);
     });
   });
 }
