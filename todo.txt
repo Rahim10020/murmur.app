@@ -6,6 +6,7 @@
     primary de meme que je soulignement du bas. je ne veux pas ca. je veux que 
     tu remplace ca par du blanc ou du noir selon le theme qu'on utilise.
 
+-- trouver les gros fichiers et faire un plan pour le refactor
 
 -- simplifier le empty state de idea page. utiliser une grande icone(trouve l'icone approprie) 
     et un petit texte en bas.
