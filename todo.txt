@@ -8,7 +8,10 @@
 
 -- trouver les gros fichiers et faire un plan pour le refactor
 
--- Designer le logo et l'utiliser dans l'application
--- coder la launch page (utiliser le logo)
--- utiliser le logo comme icone de l'application
 -- mettre en place deux langues : FR , ENG
+
+@Screenshot_20261010-161050.png Je veux que tu t'occupes uniquement de la bottom 
+nav bar de cette appli. je veux faire une similaire pour murmur. 
+On va mettre les options de "decouverte", "parametres" et celui 
+"pour enregistrer une nouvelle idee. fais moi un plan pour mettre en 
+place ca proprement.

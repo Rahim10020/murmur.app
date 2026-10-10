@@ -1,0 +1,7 @@
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/murmur-icon-full.png"
+  adaptive_icon_background: "#FFE01B"
+  adaptive_icon_foreground: "assets/icon/murmur-glyph.png"
+  remove_alpha_ios: true
