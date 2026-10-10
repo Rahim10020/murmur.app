@@ -2,8 +2,6 @@
     par l'utilisateur). on va pas utiliser d'icones. juste du texte de grand taille 
     et les boutons continuer ou retour. tu vas me trouver les meilleurs phrase marketing a mettre.
 
--- trouver les gros fichiers et faire un plan pour le refactor
-
 -- mettre en place deux langues : FR , ENG
 
 @Screenshot_20261010-161050.png Je veux que tu t'occupes uniquement de la bottom 
