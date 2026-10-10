@@ -51,6 +51,18 @@ class MurmurTheme {
         backgroundColor: MurmurColors.primary,
         foregroundColor: MurmurColors.ink,
       ),
+      // Le jaune primary est interdit en texte : le curseur, les poignées
+      // de sélection et le soulignement actif suivent la couleur de texte
+      // (encre en clair, blanc en sombre).
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: MurmurColors.ink,
+        selectionHandleColor: MurmurColors.ink,
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: MurmurColors.ink, width: 2),
+        ),
+      ),
     );
   }
 
@@ -78,6 +90,18 @@ class MurmurTheme {
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: MurmurColors.primary,
         foregroundColor: MurmurColors.ink,
+      ),
+      // Le jaune primary est interdit en texte : le curseur, les poignées
+      // de sélection et le soulignement actif suivent la couleur de texte
+      // (encre en clair, blanc en sombre).
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: MurmurColors.paper,
+        selectionHandleColor: MurmurColors.paper,
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        focusedBorder: UnderlineInputBorder(
+          borderSide: BorderSide(color: MurmurColors.paper, width: 2),
+        ),
       ),
     );
   }
