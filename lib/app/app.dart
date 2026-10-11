@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../features/reminders/data/flutter_reminder_service.dart';
+import '../features/onboarding/presentation/onboarding_page.dart';
 import 'appearance.dart';
 import 'bootstrap.dart';
+import 'onboarding.dart';
 import 'shell.dart';
 import 'theme.dart';
 
@@ -23,12 +25,14 @@ class _MurmurAppState extends State<MurmurApp> {
   StreamSubscription<String?>? _tapSubscription;
   final ValueNotifier<String?> _highlightedIdeaId = ValueNotifier(null);
   late final AppearanceController _appearance = AppearanceController();
+  late final OnboardingController _onboarding = OnboardingController();
   String? _error;
 
   @override
   void initState() {
     super.initState();
     _appearance.load();
+    _onboarding.load();
     _bootstrap();
   }
 
@@ -61,13 +65,16 @@ class _MurmurAppState extends State<MurmurApp> {
     _scope?.dispose();
     _highlightedIdeaId.dispose();
     _appearance.dispose();
+    _onboarding.dispose();
     super.dispose();
   }
+
+  Future<void> _finishOnboarding() => _onboarding.complete();
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: _appearance,
+      listenable: Listenable.merge([_appearance, _onboarding]),
       builder: (context, _) => MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Murmur',
@@ -86,7 +93,8 @@ class _MurmurAppState extends State<MurmurApp> {
               )
             : _scope == null
             ? const Scaffold(body: Center(child: CircularProgressIndicator()))
-            : MurmurShell(
+            : _onboarding.done
+            ? MurmurShell(
                 controller: _scope!.ideas,
                 capture: _scope!.capture,
                 playback: _scope!.playback,
@@ -95,7 +103,8 @@ class _MurmurAppState extends State<MurmurApp> {
                 safetyDir: _scope!.safetyDir,
                 appearance: _appearance,
                 highlightedIdeaId: _highlightedIdeaId,
-              ),
+              )
+            : OnboardingPage(onDone: _finishOnboarding),
       ),
     );
   }

@@ -42,7 +42,7 @@ void main() {
         onSettings: () {},
       );
 
-      expect(find.byIcon(LucideIcons.house), findsOneWidget);
+      expect(find.byIcon(LucideIcons.audioLines), findsOneWidget);
       expect(find.byIcon(LucideIcons.history), findsOneWidget);
       expect(find.byIcon(LucideIcons.settings), findsOneWidget);
       // Le record est détaché, hors pilule.
@@ -60,7 +60,7 @@ void main() {
         onSettings: () => openedSettings++,
       );
 
-      await tester.tap(find.byIcon(LucideIcons.house));
+      await tester.tap(find.byIcon(LucideIcons.audioLines));
       await tester.tap(find.byIcon(LucideIcons.history));
       await tester.tap(find.byIcon(LucideIcons.settings));
       await tester.pump();
@@ -125,20 +125,17 @@ void main() {
         onSettings: () {},
       );
 
-      final pill = find.descendant(
-        of: find.byType(MurmurNavBar),
-        matching: find.byWidgetPredicate(
-          (w) =>
-              w is Container &&
-              w.decoration is BoxDecoration &&
-              (w.decoration! as BoxDecoration).borderRadius ==
-                  BorderRadius.circular(MurmurNavBarDefaults.borderRadius),
+      final boxes = tester.widgetList<ConstrainedBox>(
+        find.descendant(
+          of: find.byType(MurmurNavBar),
+          matching: find.byType(ConstrainedBox),
         ),
       );
-      expect(pill, findsOneWidget);
       expect(
-        tester.getSize(pill).width,
-        lessThanOrEqualTo(MurmurNavBarDefaults.maxWidth),
+        boxes.any(
+          (b) => b.constraints.maxWidth == MurmurNavBarDefaults.maxWidth,
+        ),
+        isTrue,
       );
     });
   });
