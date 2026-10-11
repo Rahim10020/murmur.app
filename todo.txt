@@ -1,8 +1,1 @@
 -- mettre en place deux langues : FR , ENG
--- voila un souci qu'il faut corriger:
-    quand je clique sur l'icone play pour jouer une idee, l'icone ne change 
-    pas (c'est a dire que l'icone pause ne viens pas dis moi si tu comprends ce 
-    que je veux dire) et en meme temps, le progress ne bouge pas.  mais quand 
-    je reclique une seconde fois ca viens et le progress bouge. check et dis 
-    moi ce qui cause le probleme.
-
