@@ -8,12 +8,14 @@ class PlayerStatus {
     required this.position,
     required this.duration,
     required this.playing,
+    required this.buffering,
     required this.completed,
   });
 
   final Duration position;
   final Duration? duration;
   final bool playing;
+  final bool buffering;
   final bool completed;
 }
 
@@ -67,6 +69,7 @@ class JustAudioPlayerBackend implements PlayerBackend {
     Duration position = Duration.zero;
     Duration? duration;
     bool playing = false;
+    bool buffering = false;
     bool completed = false;
 
     void emit() {
@@ -76,6 +79,7 @@ class JustAudioPlayerBackend implements PlayerBackend {
             position: position,
             duration: duration,
             playing: playing,
+            buffering: buffering,
             completed: completed,
           ),
         );
@@ -93,6 +97,7 @@ class JustAudioPlayerBackend implements PlayerBackend {
       }),
       _player.playerStateStream.listen((event) {
         playing = event.playing;
+        buffering = event.processingState == ProcessingState.buffering;
         completed = event.processingState == ProcessingState.completed;
         emit();
       }),

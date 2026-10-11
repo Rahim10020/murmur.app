@@ -157,13 +157,18 @@ class PlaybackController extends ChangeNotifier {
   }
 
   Future<void> _resume() async {
+    final restartFromBeginning = state == PlaybackState.completed;
     // On exige une re-confirmation : les événements `playing: false`
     // émis pendant la reprise (re-buffering) ne doivent pas rebasculer
     // aussitôt en pause.
     _playingConfirmed = false;
     state = PlaybackState.playing;
-    notifyListeners();
     try {
+      if (restartFromBeginning) {
+        await _backend.seek(Duration.zero);
+        position = Duration.zero;
+      }
+      notifyListeners();
       await _cancelStatusSubscription();
       _statusSubscription = _backend.statusStream().listen(
         _onStatus,
@@ -188,16 +193,16 @@ class PlaybackController extends ChangeNotifier {
       if (state == PlaybackState.playing) {
         state = PlaybackState.completed;
       }
-    } else if (status.playing) {
+    } else if (status.playing || status.buffering) {
       _playingConfirmed = true;
       if (state == PlaybackState.paused ||
           state == PlaybackState.loading) {
         state = PlaybackState.playing;
       }
     } else if (!status.playing && state == PlaybackState.playing) {
-      // Interruption externe (appel, autre app audio…) : uniquement si la
-      // lecture avait déjà été confirmée, sinon c'est un faux signal
-      // initial (buffering / valeur par défaut du wrapper).
+      // Interruption externe (appel, autre app audio…) : buffering est
+      // traité séparément ci-dessus ; seuls les vrais arrêts basculent
+      // vers paused.
       if (_playingConfirmed) {
         state = PlaybackState.paused;
       }

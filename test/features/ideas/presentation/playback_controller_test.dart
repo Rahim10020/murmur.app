@@ -11,6 +11,7 @@ class FakePlayerBackend implements PlayerBackend {
 
   bool failOnLoad;
   int playCount = 0;
+  final List<Duration> seeks = <Duration>[];
   final StreamController<PlayerStatus> statuses =
       StreamController<PlayerStatus>.broadcast();
 
@@ -34,7 +35,9 @@ class FakePlayerBackend implements PlayerBackend {
   }
 
   @override
-  Future<void> seek(Duration position) async {}
+  Future<void> seek(Duration position) async {
+    seeks.add(position);
+  }
 
   @override
   Stream<PlayerStatus> statusStream() => statuses.stream;
@@ -49,12 +52,14 @@ PlayerStatus _status({
   Duration position = Duration.zero,
   Duration? duration = const Duration(seconds: 30),
   bool playing = true,
+  bool buffering = false,
   bool completed = false,
 }) {
   return PlayerStatus(
     position: position,
     duration: duration,
     playing: playing,
+    buffering: buffering,
     completed: completed,
   );
 }
@@ -158,6 +163,52 @@ void main() {
       await _flushEvents();
 
       expect(controller.state, PlaybackState.paused);
+    });
+
+    test('buffering transitoire ne bascule pas la lecture en pause', () async {
+      final dir = await Directory.systemTemp.createTemp('murmur-play-');
+      addTearDown(() => dir.delete(recursive: true));
+      final audioPath = '${dir.path}/a.m4a';
+      await File(audioPath).writeAsBytes(<int>[1]);
+
+      final backend = FakePlayerBackend();
+      final controller = PlaybackController(backend);
+      addTearDown(controller.dispose);
+
+      await controller.play(_idea('a'), audioPath);
+      backend.emitStatus(_status());
+      await _flushEvents();
+      backend.emitStatus(_status(playing: false, buffering: true));
+      await _flushEvents();
+
+      expect(controller.state, PlaybackState.playing);
+    });
+
+    test('rejoue depuis zéro après la fin', () async {
+      final dir = await Directory.systemTemp.createTemp('murmur-play-');
+      addTearDown(() => dir.delete(recursive: true));
+      final audioPath = '${dir.path}/a.m4a';
+      await File(audioPath).writeAsBytes(<int>[1]);
+
+      final backend = FakePlayerBackend();
+      final controller = PlaybackController(backend);
+      addTearDown(controller.dispose);
+
+      await controller.play(_idea('a'), audioPath);
+      backend.emitStatus(
+        _status(
+          position: const Duration(seconds: 30),
+          playing: false,
+          completed: true,
+        ),
+      );
+      await _flushEvents();
+      await controller.toggle(_idea('a'), audioPath);
+
+      expect(controller.state, PlaybackState.playing);
+      expect(controller.position, Duration.zero);
+      expect(backend.seeks, [Duration.zero]);
+      expect(backend.playCount, 2);
     });
 
     test('fichier manquant : erreur récupérable, pas de crash', () async {
