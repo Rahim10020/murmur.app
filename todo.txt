@@ -1,7 +1,3 @@
--- Je veux coder des onboarding (pour la premiere visite ou installation de l'application 
-    par l'utilisateur). on va pas utiliser d'icones. juste du texte de grand taille 
-    et les boutons continuer ou retour. tu vas me trouver les meilleurs phrase marketing a mettre.
-
 -- mettre en place deux langues : FR , ENG
 -- voila un souci qu'il faut corriger:
     quand je clique sur l'icone play pour jouer une idee, l'icone ne change 
