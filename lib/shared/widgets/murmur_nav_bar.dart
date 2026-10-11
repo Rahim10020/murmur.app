@@ -3,6 +3,7 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../../app/motion.dart';
 import '../../app/theme.dart';
+import '../../l10n/strings_scope.dart';
 
 /// Valeurs par défaut centralisées de la navigation.
 class MurmurNavBarDefaults {
@@ -50,6 +51,7 @@ class MurmurNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = StringsScope.of(context);
     // Hauteur stricte : en contraintes lâches, un expansible occuperait
     // tout l'espace restant et écraserait le body du Scaffold à 0.
     return SizedBox(
@@ -66,14 +68,14 @@ class MurmurNavBar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _NavIcon(
-                  tooltip: 'Accueil',
+                  tooltip: strings.navHome,
                   icon: LucideIcons.audioLines,
                   selected: selectedIndex == 0,
                   onTap: onHome,
                 ),
                 const SizedBox(width: MurmurNavBarDefaults.itemGap),
                 _NavIcon(
-                  tooltip: 'Redécouvrir des idées',
+                  tooltip: strings.navDiscover,
                   icon: LucideIcons.history,
                   selected: selectedIndex == 1,
                   onTap: onDiscover,
@@ -81,7 +83,7 @@ class MurmurNavBar extends StatelessWidget {
                 ),
                 const SizedBox(width: MurmurNavBarDefaults.itemGap),
                 _NavIcon(
-                  tooltip: 'Paramètres et sauvegarde',
+                  tooltip: strings.navSettings,
                   icon: LucideIcons.settings,
                   selected: selectedIndex == 2,
                   onTap: onSettings,
@@ -170,6 +172,7 @@ class MurmurRecordButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = StringsScope.of(context);
     final radius = BorderRadius.circular(MurmurNavBarDefaults.recordRadius);
     return _PressScale(
       child: Material(
@@ -180,12 +183,12 @@ class MurmurRecordButton extends StatelessWidget {
         child: InkWell(
           borderRadius: radius,
           onTap: onTap,
-          child: const SizedBox(
+          child: SizedBox(
             width: MurmurNavBarDefaults.recordSize,
             height: MurmurNavBarDefaults.recordSize,
             child: Tooltip(
-              message: 'Enregistrer une idée',
-              child: Icon(LucideIcons.mic, size: 32, color: MurmurColors.ink),
+              message: strings.recordIdea,
+              child: const Icon(LucideIcons.mic, size: 32, color: MurmurColors.ink),
             ),
           ),
         ),

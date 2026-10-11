@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../../l10n/app_strings.dart';
 import '../data/player_backend.dart';
 import '../domain/idea.dart';
 
@@ -15,9 +16,17 @@ enum PlaybackState { idle, loading, playing, paused, completed, error }
 /// aucun sondage par timer. Fichier manquant ou illisible → état erreur
 /// récupérable, jamais de crash.
 class PlaybackController extends ChangeNotifier {
-  PlaybackController(this._backend);
+  PlaybackController(this._backend, {AppStrings? strings})
+    : _strings = strings ?? const FrStrings();
 
   final PlayerBackend _backend;
+  AppStrings _strings;
+
+  /// Met à jour les chaînes (changement de langue).
+  void setStrings(AppStrings strings) {
+    _strings = strings;
+    notifyListeners();
+  }
 
   PlaybackState state = PlaybackState.idle;
   String? currentIdeaId;
@@ -73,7 +82,7 @@ class PlaybackController extends ChangeNotifier {
 
     if (!await File(audioPath).exists()) {
       state = PlaybackState.error;
-      errorMessage = 'Fichier audio introuvable pour cette idée.';
+      errorMessage = _strings.playbackFileMissing;
       notifyListeners();
       return;
     }
@@ -98,7 +107,7 @@ class PlaybackController extends ChangeNotifier {
     } catch (e) {
       await _cancelStatusSubscription();
       state = PlaybackState.error;
-      errorMessage = 'Lecture impossible : $e';
+      errorMessage = _strings.playbackFailed(e);
       notifyListeners();
     }
   }
@@ -121,7 +130,7 @@ class PlaybackController extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       state = PlaybackState.error;
-      errorMessage = 'Recherche impossible : $e';
+      errorMessage = _strings.seekFailed(e);
       notifyListeners();
     }
   }
@@ -164,7 +173,7 @@ class PlaybackController extends ChangeNotifier {
     } catch (e) {
       await _cancelStatusSubscription();
       state = PlaybackState.error;
-      errorMessage = 'Lecture impossible : $e';
+      errorMessage = _strings.playbackFailed(e);
       notifyListeners();
     }
   }

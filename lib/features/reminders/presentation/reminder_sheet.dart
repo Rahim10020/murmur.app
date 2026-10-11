@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../../../app/text_styles.dart';
+import '../../../l10n/strings_scope.dart';
 import '../../../shared/widgets/murmur_button.dart';
 import '../../ideas/domain/idea.dart';
 import '../../ideas/presentation/idea_display.dart';
@@ -36,6 +37,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = StringsScope.of(context);
     final nowLocal = DateTime.now();
     final laterToday = ReminderPolicy.laterToday(nowLocal);
     final tomorrow = ReminderPolicy.tomorrow(nowLocal);
@@ -47,12 +49,14 @@ class _ReminderSheetState extends State<ReminderSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Me rappeler', style: MurmurTextStyles.sectionTitle),
+            Text(strings.remindMe, style: MurmurTextStyles.sectionTitle),
             const SizedBox(height: 4),
             Text(
               widget.idea.reminderAtUtc == null
-                  ? 'Aucun rappel pour cette idée.'
-                  : 'Rappel actuel : ${formatReminder(widget.idea.reminderAtUtc!)}.',
+                  ? strings.noReminder
+                  : strings.currentReminder(
+                      formatReminder(widget.idea.reminderAtUtc!, strings),
+                    ),
               style: MurmurTextStyles.paragraph,
             ),
             if (_error != null) ...[
@@ -61,10 +65,8 @@ class _ReminderSheetState extends State<ReminderSheet> {
             ],
             if (_permissionDenied) ...[
               const SizedBox(height: 8),
-              const Text(
-                'Notifications non autorisées : les rappels ne pourront pas '
-                's’afficher tant que l’autorisation n’est pas accordée dans '
-                'les réglages Android.',
+              Text(
+                strings.notifDeniedBody,
                 style: MurmurTextStyles.paragraph,
               ),
             ],
@@ -77,26 +79,26 @@ class _ReminderSheetState extends State<ReminderSheet> {
                     ? null
                     : () => _schedule(laterToday),
                 icon: LucideIcons.moon,
-                label: 'Plus tard aujourd’hui (20h00)',
+                label: strings.laterToday,
               ),
               const SizedBox(height: 8),
               MurmurButton(
                 onPressed: () => _schedule(tomorrow),
                 icon: LucideIcons.sunrise,
-                label: 'Demain (9h00)',
+                label: strings.tomorrow,
               ),
               const SizedBox(height: 8),
               MurmurButton(
                 onPressed: () => _schedule(nextWeek),
                 icon: LucideIcons.calendarClock,
-                label: 'Semaine prochaine',
+                label: strings.nextWeek,
               ),
               const SizedBox(height: 8),
               MurmurButton(
                 variant: MurmurButtonVariant.outline,
                 onPressed: _pickCustom,
                 icon: LucideIcons.calendarPlus,
-                label: 'Choisir une date…',
+                label: strings.pickDate,
               ),
               if (widget.idea.reminderAtUtc != null) ...[
                 const SizedBox(height: 8),
@@ -104,7 +106,7 @@ class _ReminderSheetState extends State<ReminderSheet> {
                   variant: MurmurButtonVariant.text,
                   onPressed: _cancel,
                   icon: LucideIcons.bellOff,
-                  label: 'Annuler le rappel',
+                  label: strings.cancelReminder,
                 ),
               ],
             ],
@@ -115,13 +117,14 @@ class _ReminderSheetState extends State<ReminderSheet> {
   }
 
   Future<void> _schedule(DateTime whenLocal) async {
+    final strings = StringsScope.of(context);
     setState(() {
       _saving = true;
       _error = null;
       _permissionDenied = false;
     });
     try {
-      ReminderPolicy.validateFuture(whenLocal, DateTime.now());
+      ReminderPolicy.validateFuture(whenLocal, DateTime.now(), strings);
       final granted = await widget.reminders.requestPermission();
       if (!granted) {
         setState(() {

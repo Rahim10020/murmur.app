@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../../../app/text_styles.dart';
+import '../../../l10n/app_strings.dart';
+import '../../../l10n/strings_scope.dart';
 import '../../../shared/widgets/murmur_button.dart';
 
 /// Une page d'onboarding : icône, grand titre + paragraphe, tout centré.
@@ -17,29 +19,34 @@ class OnboardingContent {
   final String body;
 }
 
-const List<OnboardingContent> onboardingPages = [
+const List<IconData> onboardingIcons = [
+  LucideIcons.micVocal,
+  LucideIcons.shieldCheck,
+  LucideIcons.bellRing,
+];
+
+/// Contenus localisés dans l'ordre des icônes.
+List<OnboardingContent> onboardingContents(AppStrings strings) => [
   OnboardingContent(
     icon: LucideIcons.micVocal,
-    title: 'Une idée ? Murmurez-la.',
-    body:
-        'Capturez vos pensées à voix haute en un geste. '
-        'Rien à écrire, rien à classer.',
+    title: strings.onboardTitle1,
+    body: strings.onboardBody1,
   ),
   OnboardingContent(
     icon: LucideIcons.shieldCheck,
-    title: 'Vos mots restent à vous.',
-    body:
-        '100 % hors-ligne, sur votre téléphone. '
-        'Rien n’est envoyé, rien n’est analysé.',
+    title: strings.onboardTitle2,
+    body: strings.onboardBody2,
   ),
   OnboardingContent(
     icon: LucideIcons.bellRing,
-    title: 'On vous la rappelle.',
-    body:
-        'Programmez un rappel, ou laissez Murmur vous faire '
-        'redécouvrir vos idées au bon moment.',
+    title: strings.onboardTitle3,
+    body: strings.onboardBody3,
   ),
 ];
+
+/// Compat historique (FR) pour les tests existants.
+List<OnboardingContent> get onboardingPages =>
+    onboardingContents(const FrStrings());
 
 /// Parcours première visite : texte grand format, boutons
 /// Continuer/Retour, « Passer » toujours disponible (jamais bloquant),
@@ -63,7 +70,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     super.dispose();
   }
 
-  bool get _last => _index >= onboardingPages.length - 1;
+  bool get _last => _index >= onboardingIcons.length - 1;
 
   void _goTo(int index) {
     _pages.animateToPage(
@@ -75,6 +82,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = StringsScope.of(context);
+    final pages = onboardingContents(strings);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -82,7 +91,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           MurmurButton(
             variant: MurmurButtonVariant.text,
             onPressed: widget.onDone,
-            label: 'Passer',
+            label: strings.onboardSkip,
           ),
         ],
       ),
@@ -95,10 +104,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
               Expanded(
                 child: PageView.builder(
                   controller: _pages,
-                  itemCount: onboardingPages.length,
+                  itemCount: pages.length,
                   onPageChanged: (index) => setState(() => _index = index),
                   itemBuilder: (context, index) {
-                    final page = onboardingPages[index];
+                    final page = pages[index];
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -135,7 +144,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  for (var i = 0; i < onboardingPages.length; i++)
+                  for (var i = 0; i < pages.length; i++)
                     AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -160,7 +169,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       child: MurmurButton(
                         variant: MurmurButtonVariant.text,
                         onPressed: () => _goTo(_index - 1),
-                        label: 'Retour',
+                        label: strings.onboardBack,
                       ),
                     ),
                   if (_index > 0) const SizedBox(width: 12),
@@ -170,7 +179,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       onPressed: _last
                           ? widget.onDone
                           : () => _goTo(_index + 1),
-                      label: _last ? 'Commencer' : 'Continuer',
+                      label: _last ? strings.onboardStart : strings.onboardContinue,
                     ),
                   ),
                 ],

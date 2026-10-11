@@ -9,6 +9,8 @@ import 'package:murmur/features/ideas/presentation/ideas_controller.dart';
 import 'package:murmur/features/reminders/data/flutter_reminder_service.dart';
 import 'package:murmur/app/appearance.dart';
 import 'package:murmur/features/settings/presentation/settings_page.dart';
+import 'package:murmur/l10n/app_locale.dart';
+import 'package:murmur/l10n/locale_controller.dart';
 
 class FakeIdeaRepository implements IdeaRepository {
   @override
@@ -72,9 +74,11 @@ void main() {
     ) async {
       final controller = IdeasController(FakeIdeaRepository());
       final appearance = AppearanceController(store: MemoryThemeModeStore());
+      final locale = LocaleController(store: MemoryLocaleStore());
       addTearDown(() {
         controller.dispose();
         appearance.dispose();
+        locale.dispose();
       });
 
       await tester.pumpWidget(
@@ -85,6 +89,7 @@ void main() {
             audioDir: Directory('/tmp/murmur-audio-test'),
             safetyDir: Directory('/tmp/murmur-safety-test'),
             appearance: appearance,
+            locale: locale,
             onRestored: () async {},
           ),
         ),
@@ -104,9 +109,11 @@ void main() {
     ) async {
       final controller = IdeasController(FakeIdeaRepository());
       final appearance = AppearanceController(store: MemoryThemeModeStore());
+      final locale = LocaleController(store: MemoryLocaleStore());
       addTearDown(() {
         controller.dispose();
         appearance.dispose();
+        locale.dispose();
       });
 
       await tester.pumpWidget(
@@ -117,6 +124,7 @@ void main() {
             audioDir: Directory('/tmp/murmur-audio-test'),
             safetyDir: Directory('/tmp/murmur-safety-test'),
             appearance: appearance,
+            locale: locale,
             onRestored: () async {},
           ),
         ),
@@ -124,13 +132,55 @@ void main() {
       await tester.pump();
 
       expect(find.text('Apparence'), findsOneWidget);
-      expect(find.text('Système'), findsOneWidget);
+      // 'Système' apparaît deux fois : thème système + langue système.
+      expect(find.text('Système'), findsNWidgets(2));
       expect(find.text('Clair'), findsOneWidget);
       expect(find.text('Sombre'), findsOneWidget);
 
       await tester.tap(find.text('Sombre'));
       await tester.pump();
       expect(appearance.mode, ThemeMode.dark);
+    });
+
+    testWidgets('section langue : Système/Français/Anglais', (
+      tester,
+    ) async {
+      final controller = IdeasController(FakeIdeaRepository());
+      final appearance = AppearanceController(store: MemoryThemeModeStore());
+      final store = MemoryLocaleStore();
+      final locale = LocaleController(store: store);
+      addTearDown(() {
+        controller.dispose();
+        appearance.dispose();
+        locale.dispose();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SettingsPage(
+            controller: controller,
+            reminders: FakeReminderService(),
+            audioDir: Directory('/tmp/murmur-audio-test'),
+            safetyDir: Directory('/tmp/murmur-safety-test'),
+            appearance: appearance,
+            locale: locale,
+            onRestored: () async {},
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Langue'), findsOneWidget);
+      expect(find.text('Français'), findsOneWidget);
+      expect(find.text('Anglais'), findsOneWidget);
+
+      await tester.tap(find.text('Anglais'));
+      await tester.pump();
+      expect(locale.locale, AppLocale.english);
+
+      await tester.tap(find.text('Français'));
+      await tester.pump();
+      expect(locale.locale, AppLocale.french);
     });
   });
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../../../app/text_styles.dart';
+import '../../../l10n/strings_scope.dart';
 import '../../ideas/presentation/idea_display.dart';
 import '../../ideas/presentation/ideas_controller.dart';
 import '../../ideas/presentation/playback_controller.dart';
@@ -61,18 +62,19 @@ class _RediscoverySessionPageState extends State<RediscoverySessionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = StringsScope.of(context);
     final selection = RediscoveryPolicy.selectSession(
       widget.controller.ideas,
       DateTime.now().toUtc(),
     );
     return Scaffold(
-      appBar: AppBar(title: const Text('Redécouverte')),
+      appBar: AppBar(title: Text(strings.rediscoveryTitle)),
       body: selection.isEmpty
-          ? const Center(
+          ? Center(
               child: Padding(
-                padding: EdgeInsets.all(32),
+                padding: const EdgeInsets.all(32),
                 child: Text(
-                  'Rien à redécouvrir pour le moment',
+                  strings.rediscoveryEmpty,
                   textAlign: TextAlign.center,
                   style: MurmurTextStyles.paragraph,
                 ),
@@ -104,16 +106,16 @@ class _RediscoverySessionPageState extends State<RediscoverySessionPage> {
                           ),
                         )
                       : IconButton(
-                          tooltip: playing ? 'Pause' : 'Lire',
+                          tooltip: playing ? strings.pause : strings.play,
                           icon: Icon(
                             playing ? LucideIcons.pause : LucideIcons.play,
                           ),
                           onPressed: () =>
                               widget.playback.toggle(idea, audioPath),
                         ),
-                  title: Text(fallbackTitle(idea)),
+                  title: Text(fallbackTitle(idea, strings)),
                   subtitle: Text(
-                    'Enregistrée le ${_formatDate(idea.createdAtUtc)} • '
+                    '${strings.recordedOn(_formatDate(idea.createdAtUtc, strings.isFrench))} • '
                     '${formatDuration(Duration(milliseconds: idea.durationMs))}',
                   ),
                 );
@@ -122,10 +124,11 @@ class _RediscoverySessionPageState extends State<RediscoverySessionPage> {
     );
   }
 
-  String _formatDate(DateTime utc) {
+  String _formatDate(DateTime utc, bool french) {
     final local = utc.toLocal();
     final day = local.day.toString().padLeft(2, '0');
     final month = local.month.toString().padLeft(2, '0');
-    return '$day/$month/${local.year}';
+    if (french) return '$day/$month/${local.year}';
+    return '$month/$day/${local.year}';
   }
 }

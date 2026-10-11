@@ -7,21 +7,20 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../../../app/appearance.dart';
 import '../../../app/text_styles.dart';
+import '../../../l10n/app_locale.dart';
+import '../../../l10n/app_strings.dart';
+import '../../../l10n/locale_controller.dart';
+import '../../../l10n/strings_scope.dart';
 import '../../../shared/widgets/murmur_button.dart';
 import '../../backup/data/backup_service.dart';
 import '../../backup/domain/backup_manifest.dart';
 import '../../ideas/presentation/ideas_controller.dart';
 import '../../reminders/data/flutter_reminder_service.dart';
 
-String formatBytes(int bytes) {
-  if (bytes < 1024) return '$bytes o';
-  final kb = bytes / 1024;
-  if (kb < 1024) return '${kb.toStringAsFixed(1)} Ko';
-  final mb = kb / 1024;
-  return '${mb.toStringAsFixed(1)} Mo';
-}
+String formatBytes(int bytes, [AppStrings? strings]) =>
+    (strings ?? const FrStrings()).formatBytes(bytes);
 
-/// Paramètres : sauvegarde locale export/restauration (brief §3).
+/// Paramètres : langue, apparence, sauvegarde locale export/restauration.
 ///
 /// Les archives sont choisies par l'utilisateur via le sélecteur système
 /// (aucune permission de stockage large). Murmur ne téléverse rien :
@@ -34,6 +33,7 @@ class SettingsPage extends StatefulWidget {
     required this.audioDir,
     required this.safetyDir,
     required this.appearance,
+    required this.locale,
     required this.onRestored,
   });
 
@@ -42,6 +42,7 @@ class SettingsPage extends StatefulWidget {
   final Directory audioDir;
   final Directory safetyDir;
   final AppearanceController appearance;
+  final LocaleController locale;
   final Future<void> Function() onRestored;
 
   @override
@@ -56,31 +57,58 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = StringsScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Paramètres')),
+      appBar: AppBar(title: Text(strings.settingsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          const Text('Apparence', style: MurmurTextStyles.sectionTitle),
+          Text(strings.languageSection, style: MurmurTextStyles.sectionTitle),
+          const SizedBox(height: 8),
+          ListenableBuilder(
+            listenable: widget.locale,
+            builder: (context, _) => SegmentedButton<AppLocale>(
+              segments: [
+                ButtonSegment<AppLocale>(
+                  value: AppLocale.system,
+                  icon: const Icon(LucideIcons.languages),
+                  label: Text(strings.langSystem),
+                ),
+                ButtonSegment<AppLocale>(
+                  value: AppLocale.french,
+                  label: Text(strings.langFrench),
+                ),
+                ButtonSegment<AppLocale>(
+                  value: AppLocale.english,
+                  label: Text(strings.langEnglish),
+                ),
+              ],
+              selected: {widget.locale.locale},
+              onSelectionChanged: (selection) =>
+                  widget.locale.setLocale(selection.first),
+            ),
+          ),
+          const SizedBox(height: 32),
+          Text(strings.appearanceSection, style: MurmurTextStyles.sectionTitle),
           const SizedBox(height: 8),
           ListenableBuilder(
             listenable: widget.appearance,
             builder: (context, _) => SegmentedButton<ThemeMode>(
-              segments: const [
+              segments: [
                 ButtonSegment<ThemeMode>(
                   value: ThemeMode.system,
-                  icon: Icon(LucideIcons.monitorSmartphone),
-                  label: Text('Système'),
+                  icon: const Icon(LucideIcons.monitorSmartphone),
+                  label: Text(strings.themeSystem),
                 ),
                 ButtonSegment<ThemeMode>(
                   value: ThemeMode.light,
-                  icon: Icon(LucideIcons.sun),
-                  label: Text('Clair'),
+                  icon: const Icon(LucideIcons.sun),
+                  label: Text(strings.themeLight),
                 ),
                 ButtonSegment<ThemeMode>(
                   value: ThemeMode.dark,
-                  icon: Icon(LucideIcons.moon),
-                  label: Text('Sombre'),
+                  icon: const Icon(LucideIcons.moon),
+                  label: Text(strings.themeDark),
                 ),
               ],
               selected: {widget.appearance.mode},
@@ -89,26 +117,24 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 32),
-          const Text('Sauvegarde locale', style: MurmurTextStyles.sectionTitle),
+          Text(strings.backupSection, style: MurmurTextStyles.sectionTitle),
           const SizedBox(height: 4),
-          const Text(
-            'Une archive ZIP contient toutes vos idées et leurs audios. '
-            'Elle est enregistrée là où vous choisissez (Téléchargements, '
-            'carte SD, clé USB…) : Murmur ne la téléverse nulle part.',
+          Text(
+            strings.backupDescription,
             style: MurmurTextStyles.paragraph,
           ),
           const SizedBox(height: 16),
           MurmurButton(
             onPressed: _busy ? null : _export,
             icon: LucideIcons.download,
-            label: 'Exporter une sauvegarde',
+            label: strings.exportBackup,
           ),
           const SizedBox(height: 8),
           MurmurButton(
             variant: MurmurButtonVariant.outline,
             onPressed: _busy ? null : _restore,
             icon: LucideIcons.upload,
-            label: 'Restaurer une sauvegarde',
+            label: strings.restoreBackup,
           ),
           if (_busy) ...[
             const SizedBox(height: 16),
@@ -124,16 +150,17 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _export() async {
+    final strings = StringsScope.of(context);
     setState(() {
       _busy = true;
-      _status = 'Préparation de l’archive…';
+      _status = strings.preparingArchive;
     });
     try {
       final ideas = widget.controller.ideas;
       if (ideas.isEmpty) {
         setState(() {
           _busy = false;
-          _status = 'Rien à exporter : aucune idée enregistrée.';
+          _status = strings.nothingToExport;
         });
         return;
       }
@@ -142,7 +169,7 @@ class _SettingsPageState extends State<SettingsPage> {
         audioDir: widget.audioDir,
       );
       final uri = await FilePicker.saveFile(
-        dialogTitle: 'Enregistrer la sauvegarde Murmur',
+        dialogTitle: strings.saveBackupDialogTitle,
         fileName: suggestedBackupFileName(DateTime.now()),
         mimeType: 'application/zip',
         bytes: bytes,
@@ -151,28 +178,27 @@ class _SettingsPageState extends State<SettingsPage> {
       setState(() {
         _busy = false;
         _status = uri == null
-            ? 'Export annulé.'
-            : 'Sauvegarde enregistrée (${formatBytes(bytes.length)}). '
-                  'Pensez à la copier ailleurs : Murmur ne la conserve pas '
-                  'en cas de désinstallation.';
+            ? strings.exportCancelled
+            : strings.exportSaved(formatBytes(bytes.length, strings));
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _status = 'Export impossible : $e';
+        _status = '${StringsScope.of(context).exportFailedPrefix} : $e';
       });
     }
   }
 
   Future<void> _restore() async {
+    final strings = StringsScope.of(context);
     setState(() {
       _busy = true;
-      _status = 'Choisissez une sauvegarde…';
+      _status = strings.chooseBackup;
     });
     try {
       final picked = await FilePicker.pickFile(
-        dialogTitle: 'Choisir une sauvegarde Murmur',
+        dialogTitle: strings.pickBackupDialogTitle,
         type: FileType.custom,
         allowedExtensions: ['zip'],
       );
@@ -180,7 +206,7 @@ class _SettingsPageState extends State<SettingsPage> {
         if (!mounted) return;
         setState(() {
           _busy = false;
-          _status = 'Restauration annulée.';
+          _status = StringsScope.of(context).restoreCancelled;
         });
         return;
       }
@@ -192,17 +218,17 @@ class _SettingsPageState extends State<SettingsPage> {
         if (!mounted) return;
         setState(() {
           _busy = false;
-          _status = 'Restauration annulée : vos données sont inchangées.';
+          _status = StringsScope.of(context).restoreCancelledUnchanged;
         });
         return;
       }
-      setState(() => _status = 'Sauvegarde de sécurité…');
+      setState(() => _status = StringsScope.of(context).safetyBackup);
       await _backups.createSafetyBackup(
         ideas: widget.controller.ideas,
         audioDir: widget.audioDir,
         safetyDir: widget.safetyDir,
       );
-      setState(() => _status = 'Restauration en cours…');
+      setState(() => _status = StringsScope.of(context).restoring);
       final staging = await Directory.systemTemp.createTemp('murmur-restore-');
       try {
         final report = await _backups.restoreArchive(
@@ -230,41 +256,44 @@ class _SettingsPageState extends State<SettingsPage> {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _status =
-            'Restauration refusée : ${e.message} Vos données sont inchangées.';
+        _status = StringsScope.of(context).restoreRefused(e.message);
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _busy = false;
-        _status = 'Restauration impossible : $e';
+        _status = StringsScope.of(context).restoreFailed(e);
       });
     }
   }
 
   Future<bool?> _confirmReplace(BackupPreview preview) {
+    final strings = StringsScope.of(context);
     final exported = preview.exportedAtUtc.toLocal();
+    final date = strings.isFrench
+        ? '${exported.day}/${exported.month}/${exported.year}'
+        : '${exported.month}/${exported.day}/${exported.year}';
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remplacer les données actuelles ?'),
+        title: Text(strings.replaceDataTitle),
         content: Text(
-          'Sauvegarde du ${exported.day}/${exported.month}/${exported.year} : '
-          '${preview.ideaCount} idée(s), ${formatBytes(preview.totalAudioBytes)}.\n\n'
-          'Vos idées actuelles seront remplacées (une copie de sécurité '
-          'automatique est conservée dans l’app avant remplacement). '
-          'Les rappels passés ne seront pas replanifiés.',
+          strings.replaceDataBody(
+            date,
+            preview.ideaCount,
+            formatBytes(preview.totalAudioBytes, strings),
+          ),
           style: MurmurTextStyles.paragraph,
         ),
         actions: [
           MurmurButton(
             variant: MurmurButtonVariant.text,
             onPressed: () => Navigator.of(context).pop(false),
-            label: 'Garder mes données',
+            label: strings.keepMyData,
           ),
           MurmurButton(
             onPressed: () => Navigator.of(context).pop(true),
-            label: 'Remplacer',
+            label: strings.replace,
           ),
         ],
       ),
@@ -272,26 +301,29 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _showReport(RestoreReport report) {
+    final strings = StringsScope.of(context);
     final buffer = StringBuffer(
-      '${report.restoredCount} idée(s) restaurée(s).\n'
-      '${report.rescheduledCount} rappel(s) futur(s) replanifié(s), '
-      '${report.skippedPastCount} passé(s) ignoré(s).',
+      strings.restoreReport(
+        report.restoredCount,
+        report.rescheduledCount,
+        report.skippedPastCount,
+      ),
     );
     if (report.schedulingErrors.isNotEmpty) {
       buffer.write(
-        '\n\nReplanification impossible pour :\n'
+        '\n\n${strings.rescheduleImpossiblePrefix}\n'
         '${report.schedulingErrors.take(3).join('\n')}',
       );
     }
     return showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Restauration terminée'),
+        title: Text(strings.restoreDoneTitle),
         content: Text(buffer.toString(), style: MurmurTextStyles.paragraph),
         actions: [
           MurmurButton(
             onPressed: () => Navigator.of(context).pop(),
-            label: 'OK',
+            label: strings.ok,
           ),
         ],
       ),

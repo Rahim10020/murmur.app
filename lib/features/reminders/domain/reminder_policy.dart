@@ -1,3 +1,4 @@
+import '../../../l10n/app_strings.dart';
 import '../../ideas/domain/idea.dart';
 
 /// Politique de rappels Murmur (brief §3 et §10) — logique pure.
@@ -9,17 +10,27 @@ import '../../ideas/domain/idea.dart';
 class ReminderPolicy {
   const ReminderPolicy._();
 
-  /// Titre discret affiché dans la notification.
+  /// Titre discret affiché dans la notification (FR historique).
   static const String notificationTitle = 'Une idée à revoir';
 
-  /// Corps discret affiché dans la notification.
+  /// Corps discret affiché dans la notification (FR historique).
   static const String notificationBody =
       'Prends un instant pour retrouver une idée enregistrée.';
 
   static const String channelId = 'murmur_reminders';
+
+  /// Nom de canal historique (FR). Voir `channelNameFor`.
   static const String channelName = 'Rappels';
+
+  /// Description de canal historique (FR). Voir `channelDescriptionFor`.
   static const String channelDescription =
       'Rappels pour revoir vos idées enregistrées.';
+
+  /// Versions localisées (notifications planifiées après le choix de langue).
+  static String localizedTitle(AppStrings s) => s.notificationTitle;
+  static String localizedBody(AppStrings s) => s.notificationBody;
+  static String channelNameFor(AppStrings s) => s.channelName;
+  static String channelDescriptionFor(AppStrings s) => s.channelDescription;
 
   /// ID de notification déterministe dérivé de l'ID stable de l'idée.
   ///
@@ -43,10 +54,12 @@ class ReminderPolicy {
   }
 
   /// Un rappel n'est actif que s'il est dans le futur (strict).
-  static bool isActiveReminder(DateTime? reminderAtUtc, DateTime nowUtc) {
+  static bool isActiveReminder(DateTime? reminderAtUtc, DateTime nowUtc, [AppStrings? strings]) {
     if (reminderAtUtc == null) return false;
     if (!reminderAtUtc.isUtc || !nowUtc.isUtc) {
-      throw ArgumentError('Les comparaisons se font en UTC.');
+      throw ArgumentError(
+        (strings ?? const FrStrings()).utcCompareMessage,
+      );
     }
     return reminderAtUtc.isAfter(nowUtc);
   }
@@ -70,12 +83,12 @@ class ReminderPolicy {
   }
 
   /// Refuse les dates passées ou trop proches (marge d'1 minute).
-  static void validateFuture(DateTime whenLocal, DateTime nowLocal) {
+  static void validateFuture(DateTime whenLocal, DateTime nowLocal, [AppStrings? strings]) {
     if (!whenLocal.isAfter(nowLocal.add(const Duration(minutes: 1)))) {
       throw ArgumentError.value(
         whenLocal,
         'when',
-        'Choisissez une date dans le futur.',
+        (strings ?? const FrStrings()).reminderPastMessage,
       );
     }
   }

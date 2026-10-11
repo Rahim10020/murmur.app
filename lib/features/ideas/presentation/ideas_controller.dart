@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../../l10n/app_strings.dart';
 import '../../reminders/data/flutter_reminder_service.dart';
 import '../../reminders/domain/reminder_policy.dart';
 import '../domain/idea.dart';
@@ -16,9 +17,17 @@ enum IdeasListState { initial, loading, loaded, error }
 /// La suppression d'une idée supprime aussi son fichier audio ; l'échec
 /// d'une opération remonte un message affichable, jamais silencieux.
 class IdeasController extends ChangeNotifier {
-  IdeasController(this._repository);
+  IdeasController(this._repository, {AppStrings? strings})
+    : _strings = strings ?? const FrStrings();
 
   final IdeaRepository _repository;
+  AppStrings _strings;
+
+  /// Met à jour les chaînes (changement de langue), sans recharger.
+  void setStrings(AppStrings strings) {
+    _strings = strings;
+    notifyListeners();
+  }
 
   IdeasListState state = IdeasListState.initial;
   List<Idea> ideas = const <Idea>[];
@@ -33,7 +42,7 @@ class IdeasController extends ChangeNotifier {
       state = IdeasListState.loaded;
     } catch (e) {
       state = IdeasListState.error;
-      errorMessage = 'Impossible de charger les idées : $e';
+      errorMessage = '${_strings.ideasLoadFailed} : $e';
     }
     notifyListeners();
   }
@@ -41,7 +50,7 @@ class IdeasController extends ChangeNotifier {
   Future<void> rename(String id, String? title) async {
     final current = await _repository.findById(id);
     if (current == null) {
-      throw StateError('Idée introuvable.');
+      throw StateError(_strings.ideaNotFound);
     }
     final trimmed = title?.trim();
     await _repository.update(
@@ -60,7 +69,7 @@ class IdeasController extends ChangeNotifier {
   }) async {
     final current = await _repository.findById(id);
     if (current == null) {
-      throw StateError('Idée introuvable.');
+      throw StateError(_strings.ideaNotFound);
     }
     final cancelsReminder =
         reminders != null &&
@@ -90,7 +99,7 @@ class IdeasController extends ChangeNotifier {
   Future<void> markReviewed(String id) async {
     final current = await _repository.findById(id);
     if (current == null) {
-      throw StateError('Idée introuvable.');
+      throw StateError(_strings.ideaNotFound);
     }
     final nowUtc = DateTime.now().toUtc();
     await _repository.update(
@@ -109,18 +118,18 @@ class IdeasController extends ChangeNotifier {
     ReminderService reminders,
   ) async {
     if (!whenUtc.isUtc) {
-      throw ArgumentError('Le rappel doit être exprimé en UTC.');
+      throw ArgumentError(_strings.reminderMustBeUtc);
     }
     if (!whenUtc.isAfter(DateTime.now().toUtc())) {
       throw ArgumentError.value(
         whenUtc,
         'whenUtc',
-        'Choisissez une date dans le futur.',
+        _strings.reminderPastMessage,
       );
     }
     final current = await _repository.findById(id);
     if (current == null) {
-      throw StateError('Idée introuvable.');
+      throw StateError(_strings.ideaNotFound);
     }
     final previous = current.reminderAtUtc;
     await _repository.update(
@@ -149,7 +158,7 @@ class IdeasController extends ChangeNotifier {
   Future<void> clearReminder(String id, ReminderService reminders) async {
     final current = await _repository.findById(id);
     if (current == null) {
-      throw StateError('Idée introuvable.');
+      throw StateError(_strings.ideaNotFound);
     }
     await _repository.update(
       current.copyWith(
@@ -184,14 +193,11 @@ class IdeasController extends ChangeNotifier {
     try {
       if (await file.exists()) await file.delete();
     } catch (e) {
-      throw StateError('Fiche supprimée, mais fichier audio conservé : $e');
+      throw StateError('${_strings.deleteFailed} : $e');
     }
     await refresh();
     if (cancelError != null) {
-      throw StateError(
-        'Idée supprimée, mais le rappel n’a pas pu être annulé : '
-        '$cancelError',
-      );
+      throw StateError('${_strings.deleteFailed} : $cancelError');
     }
   }
 }

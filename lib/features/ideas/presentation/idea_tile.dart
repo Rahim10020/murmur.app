@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
+import '../../../l10n/app_strings.dart';
+import '../../../l10n/strings_scope.dart';
 import '../../../shared/widgets/murmur_menu.dart';
 import '../domain/idea.dart';
 import 'idea_display.dart';
@@ -33,6 +35,7 @@ class IdeaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final strings = StringsScope.of(context);
     final playing = playback.isPlaying(idea.id);
     final loading =
         playback.state == PlaybackState.loading &&
@@ -56,19 +59,19 @@ class IdeaTile extends StatelessWidget {
                   ),
                 )
               : IconButton(
-                  tooltip: playing ? 'Pause' : 'Lire',
+                  tooltip: playing ? strings.pause : strings.play,
                   icon: Icon(playing ? LucideIcons.pause : LucideIcons.play),
                   onPressed: () => playback.toggle(idea, audioPath),
                 ),
-          title: Text(fallbackTitle(idea)),
-          subtitle: Text(_subtitle(hasReminder)),
+          title: Text(fallbackTitle(idea, strings)),
+          subtitle: Text(_subtitle(hasReminder, strings)),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 tooltip: hasReminder
-                    ? 'Modifier le rappel'
-                    : 'Ajouter un rappel',
+                    ? strings.editReminder
+                    : strings.addReminder,
                 icon: Icon(
                   hasReminder ? LucideIcons.bellRing : LucideIcons.bell,
                 ),
@@ -76,39 +79,39 @@ class IdeaTile extends StatelessWidget {
               ),
               Builder(
                 builder: (rowContext) => IconButton(
-                  tooltip: 'Actions',
+                  tooltip: strings.actions,
                   icon: const Icon(LucideIcons.ellipsis),
                   onPressed: () => showMurmurMenu(
                     anchorContext: rowContext,
                     items: [
                       MurmurMenuItem(
                         icon: LucideIcons.pencil,
-                        label: 'Renommer',
+                        label: strings.rename,
                         onTap: () => onRename(idea),
                       ),
                       MurmurMenuItem(
                         icon: LucideIcons.hourglass,
-                        label: 'Commencer',
+                        label: strings.markInProgress,
                         onTap: () => onStatus(idea, IdeaStatus.inProgress),
                       ),
                       MurmurMenuItem(
                         icon: LucideIcons.check,
-                        label: 'Marquer terminée',
+                        label: strings.markDone,
                         onTap: () => onStatus(idea, IdeaStatus.done),
                       ),
                       MurmurMenuItem(
                         icon: LucideIcons.archive,
-                        label: 'Archiver',
+                        label: strings.archive,
                         onTap: () => onStatus(idea, IdeaStatus.archived),
                       ),
                       MurmurMenuItem(
                         icon: LucideIcons.rotateCcw,
-                        label: 'Remettre à revoir',
+                        label: strings.backToReview,
                         onTap: () => onStatus(idea, IdeaStatus.toReview),
                       ),
                       MurmurMenuItem(
                         icon: LucideIcons.trash,
-                        label: 'Supprimer',
+                        label: strings.delete,
                         onTap: () => onDelete(idea),
                       ),
                     ],
@@ -139,17 +142,17 @@ class IdeaTile extends StatelessWidget {
     );
   }
 
-  String _subtitle(bool hasReminder) {
+  String _subtitle(bool hasReminder, AppStrings strings) {
     final buffer = StringBuffer(
       '${formatDuration(Duration(milliseconds: idea.durationMs))}'
-      ' \u2022 ${statusLabels[idea.status]}',
+      ' \u2022 ${statusLabelFor(idea.status, strings)}',
     );
     if (hasReminder) {
-      buffer.write(' \u2022 ${formatReminder(idea.reminderAtUtc!)}');
+      buffer.write(' \u2022 ${formatReminder(idea.reminderAtUtc!, strings)}');
     }
     if (playback.state == PlaybackState.error &&
         playback.currentIdeaId == idea.id) {
-      buffer.write(' \u2022 Erreur lecture');
+      buffer.write(' \u2022 ${strings.playbackError}');
     }
     return buffer.toString();
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../../../app/text_styles.dart';
+import '../../../l10n/strings_scope.dart';
 import '../../../shared/widgets/murmur_button.dart';
 import '../../ideas/presentation/idea_display.dart';
 import 'capture_controller.dart';
@@ -81,16 +82,18 @@ class _CaptureSheetState extends State<CaptureSheet> {
   }
 
   String _headline(CaptureState state) {
+    final strings = StringsScope.of(context);
     return switch (state) {
-      CaptureState.recording => 'Enregistrement en cours…',
-      CaptureState.saving => 'Sauvegarde…',
-      CaptureState.permissionDenied => 'Micro non autorisé',
-      CaptureState.error => 'Un problème est survenu',
-      CaptureState.idle => 'Prêt',
+      CaptureState.recording => strings.captureRecording,
+      CaptureState.saving => strings.captureSaving,
+      CaptureState.permissionDenied => strings.captureMicDenied,
+      CaptureState.error => strings.captureError,
+      CaptureState.idle => strings.captureIdle,
     };
   }
 
   Widget _actions(BuildContext context, CaptureController capture) {
+    final strings = StringsScope.of(context);
     switch (capture.state) {
       case CaptureState.recording:
         return Row(
@@ -103,7 +106,7 @@ class _CaptureSheetState extends State<CaptureSheet> {
                   if (context.mounted) Navigator.of(context).pop();
                 },
                 icon: LucideIcons.square,
-                label: 'Arrêter et garder',
+                label: strings.stopAndKeep,
               ),
             ),
             const SizedBox(width: 12),
@@ -117,7 +120,7 @@ class _CaptureSheetState extends State<CaptureSheet> {
                   if (context.mounted) Navigator.of(context).pop();
                 },
                 icon: LucideIcons.x,
-                label: 'Abandonner',
+                label: strings.abandon,
               ),
             ),
           ],
@@ -128,8 +131,8 @@ class _CaptureSheetState extends State<CaptureSheet> {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Autorisez le micro dans les réglages Android, puis réessayez.',
+            Text(
+              strings.micSettingsHint,
               textAlign: TextAlign.center,
               style: MurmurTextStyles.paragraph,
             ),
@@ -140,7 +143,7 @@ class _CaptureSheetState extends State<CaptureSheet> {
                   child: MurmurButton(
                     onPressed: () => capture.start(),
                     icon: LucideIcons.mic,
-                    label: 'Réessayer',
+                    label: strings.retry,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -151,7 +154,7 @@ class _CaptureSheetState extends State<CaptureSheet> {
                       capture.reset();
                       Navigator.of(context).pop();
                     },
-                    label: 'Fermer',
+                    label: strings.close,
                   ),
                 ),
               ],
@@ -165,29 +168,30 @@ class _CaptureSheetState extends State<CaptureSheet> {
             capture.reset();
             Navigator.of(context).pop();
           },
-          label: 'Fermer',
+          label: strings.close,
         );
     }
   }
 
   Future<bool?> _confirmAbandon() {
+    final strings = StringsScope.of(context);
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Abandonner l’enregistrement ?'),
-        content: const Text(
-          'L’audio en cours sera définitivement perdu.',
+        title: Text(strings.abandonRecordTitle),
+        content: Text(
+          strings.abandonRecordBody,
           style: MurmurTextStyles.paragraph,
         ),
         actions: [
           MurmurButton(
             variant: MurmurButtonVariant.text,
             onPressed: () => Navigator.of(context).pop(false),
-            label: 'Continuer',
+            label: strings.onboardContinue,
           ),
           MurmurButton(
             onPressed: () => Navigator.of(context).pop(true),
-            label: 'Abandonner',
+            label: strings.abandon,
           ),
         ],
       ),

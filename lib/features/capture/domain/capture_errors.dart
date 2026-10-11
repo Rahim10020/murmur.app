@@ -1,4 +1,6 @@
-/// Erreurs du domaine capture, avec messages destinés à l'UI (français).
+/// Erreurs du domaine capture. Les messages par défaut restent français
+/// (compatibilité historique) ; les contrôleurs affichent la version
+/// localisée via `AppStrings` quand elle est disponible.
 class MicPermissionDenied implements Exception {
   const MicPermissionDenied([
     this.message =
@@ -13,17 +15,25 @@ class MicPermissionDenied implements Exception {
 }
 
 class RecordingAlreadyActive implements Exception {
-  const RecordingAlreadyActive();
+  const RecordingAlreadyActive([
+    this.message = 'Un enregistrement est déjà en cours.',
+  ]);
+
+  final String message;
 
   @override
-  String toString() => 'Un enregistrement est déjà en cours.';
+  String toString() => message;
 }
 
 class NoActiveRecording implements Exception {
-  const NoActiveRecording();
+  const NoActiveRecording([
+    this.message = 'Aucun enregistrement en cours.',
+  ]);
+
+  final String message;
 
   @override
-  String toString() => 'Aucun enregistrement en cours.';
+  String toString() => message;
 }
 
 /// Échec de la sauvegarde des métadonnées après un arrêt réussi.

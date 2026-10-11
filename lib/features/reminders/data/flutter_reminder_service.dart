@@ -5,6 +5,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../../l10n/app_strings.dart';
 import '../domain/reminder_policy.dart';
 
 /// Service de rappels derrière une abstraction (brief §4) :
@@ -48,10 +49,16 @@ abstract class ReminderService {
 }
 
 class FlutterReminderService implements ReminderService {
-  FlutterReminderService([FlutterLocalNotificationsPlugin? plugin])
-    : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
+  FlutterReminderService([FlutterLocalNotificationsPlugin? plugin, AppStrings? strings])
+    : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
+      _strings = strings ?? const FrStrings();
 
   final FlutterLocalNotificationsPlugin _plugin;
+  AppStrings _strings;
+
+  /// Met à jour les chaînes (changement de langue) pour les prochaines
+  /// notifications planifiées.
+  void setStrings(AppStrings strings) => _strings = strings;
   final StreamController<String?> _tapController =
       StreamController<String?>.broadcast();
   bool _initialized = false;
@@ -99,24 +106,24 @@ class FlutterReminderService implements ReminderService {
     required DateTime whenUtc,
   }) async {
     if (!whenUtc.isUtc) {
-      throw ArgumentError('Le rappel doit être exprimé en UTC.');
+      throw ArgumentError(_strings.reminderMustBeUtc);
     }
     final nowUtc = DateTime.now().toUtc();
     if (!whenUtc.isAfter(nowUtc)) {
       throw ArgumentError.value(
         whenUtc,
         'whenUtc',
-        'Le rappel doit être dans le futur.',
+        _strings.reminderMustBeFuture,
       );
     }
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       ReminderPolicy.channelId,
-      ReminderPolicy.channelName,
-      channelDescription: ReminderPolicy.channelDescription,
+      ReminderPolicy.channelNameFor(_strings),
+      channelDescription: ReminderPolicy.channelDescriptionFor(_strings),
       importance: Importance.max,
       priority: Priority.high,
     );
-    const details = NotificationDetails(android: androidDetails);
+    final details = NotificationDetails(android: androidDetails);
     await _plugin.zonedSchedule(
       id: ReminderPolicy.notificationIdFor(ideaId),
       scheduledDate: tz.TZDateTime.from(whenUtc, tz.local),
@@ -124,8 +131,8 @@ class FlutterReminderService implements ReminderService {
       // Inexact par choix (brief §3) : pas d'alarme exacte, pas de
       // permission SCHEDULE_EXACT_ALARM. Livraison non garantie à la minute.
       androidScheduleMode: AndroidScheduleMode.inexact,
-      title: ReminderPolicy.notificationTitle,
-      body: ReminderPolicy.notificationBody,
+      title: ReminderPolicy.localizedTitle(_strings),
+      body: ReminderPolicy.localizedBody(_strings),
       payload: ideaId,
     );
   }

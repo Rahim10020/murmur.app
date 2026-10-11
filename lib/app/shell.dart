@@ -11,6 +11,7 @@ import '../features/rediscovery/domain/rediscovery_policy.dart';
 import '../features/rediscovery/presentation/rediscovery_session.dart';
 import '../features/reminders/data/flutter_reminder_service.dart';
 import '../features/settings/presentation/settings_page.dart';
+import '../l10n/locale_controller.dart';
 import '../shared/widgets/murmur_nav_bar.dart';
 import 'appearance.dart';
 import 'motion.dart';
@@ -32,6 +33,7 @@ class MurmurShell extends StatefulWidget {
     required this.audioDir,
     required this.safetyDir,
     required this.appearance,
+    required this.locale,
     required this.highlightedIdeaId,
   });
 
@@ -42,6 +44,7 @@ class MurmurShell extends StatefulWidget {
   final Directory audioDir;
   final Directory safetyDir;
   final AppearanceController appearance;
+  final LocaleController locale;
   final ValueNotifier<String?> highlightedIdeaId;
 
   @override
@@ -144,6 +147,7 @@ class _MurmurShellState extends State<MurmurShell> {
                   audioDir: widget.audioDir,
                   safetyDir: widget.safetyDir,
                   appearance: widget.appearance,
+                  locale: widget.locale,
                   onRestored: () => widget.controller.refresh(),
                 ),
               ],

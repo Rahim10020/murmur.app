@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:murmur/features/capture/data/recorder_backend.dart';
 import 'package:murmur/features/ideas/domain/idea_repository.dart';
+import 'package:murmur/l10n/app_strings.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
@@ -20,12 +21,18 @@ class RecordingService {
     required this.backend,
     required this.audioDirectoryProvider,
     String Function()? idGenerator,
-  }) : _idGenerator = idGenerator ?? const Uuid().v4;
+    AppStrings? strings,
+  }) : _idGenerator = idGenerator ?? const Uuid().v4,
+       _strings = strings ?? const FrStrings();
 
   final IdeaRepository repository;
   final RecorderBackend backend;
   final Future<Directory> Function() audioDirectoryProvider;
   final String Function() _idGenerator;
+  AppStrings _strings;
+
+  /// Met à jour les chaînes (changement de langue).
+  void setStrings(AppStrings strings) => _strings = strings;
 
   String? _activeId;
   DateTime? _startedAt;
@@ -40,7 +47,7 @@ class RecordingService {
   static bool isTempFileName(String name) => name.endsWith('.part.m4a');
 
   Future<void> start() async {
-    if (isRecording) throw const RecordingAlreadyActive();
+    if (isRecording) throw RecordingAlreadyActive(_strings.recordingAlreadyActive);
     final granted = await backend.hasPermission();
     if (!granted) throw const MicPermissionDenied();
 
@@ -50,7 +57,7 @@ class RecordingService {
     try {
       await backend.start(path: tempPath);
     } catch (e) {
-      throw RecordingFailure('Démarrage impossible : $e');
+      throw RecordingFailure(_strings.recordingStartFailed(e));
     }
     _activeId = id;
     _startedAt = DateTime.now();
@@ -66,7 +73,7 @@ class RecordingService {
     final tempPath = _tempPath;
     final startedAt = _startedAt;
     if (id == null || tempPath == null || startedAt == null) {
-      throw const NoActiveRecording();
+      throw NoActiveRecording(_strings.noActiveRecording);
     }
     _activeId = null;
     _startedAt = null;
@@ -75,7 +82,7 @@ class RecordingService {
     try {
       await backend.stop();
     } catch (e) {
-      throw RecordingFailure('Arrêt impossible : $e');
+      throw RecordingFailure(_strings.recordingStopFailed(e));
     }
 
     final durationMs = DateTime.now().difference(startedAt).inMilliseconds;
@@ -83,7 +90,7 @@ class RecordingService {
     final finalPath = p.join(dir.path, finalFileName(id));
     final tempFile = File(tempPath);
     if (!await tempFile.exists()) {
-      throw const RecordingFailure('Fichier temporaire introuvable.');
+      throw RecordingFailure(_strings.recordingTempMissing);
     }
     await tempFile.rename(finalPath);
 

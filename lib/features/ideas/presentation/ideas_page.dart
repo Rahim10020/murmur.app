@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../../../app/text_styles.dart';
+import '../../../l10n/strings_scope.dart';
 import '../../../shared/widgets/murmur_button.dart';
 import '../../reminders/data/flutter_reminder_service.dart';
 import '../../reminders/presentation/reminder_sheet.dart';
@@ -93,7 +94,7 @@ class _IdeasPageState extends State<IdeasPage> {
         await Future<void>.delayed(const Duration(milliseconds: 500));
         _revealHighlight(attempt + 1);
       } else if (mounted) {
-        _snack('Idée introuvable : elle a peut-être été supprimée.');
+        _snack(StringsScope.of(context).ideaNotFoundSnack);
       }
     });
   }
@@ -101,8 +102,9 @@ class _IdeasPageState extends State<IdeasPage> {
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
+    final strings = StringsScope.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Murmur')),
+      appBar: AppBar(title: Text(strings.appTitle)),
       body: switch (controller.state) {
         IdeasListState.initial || IdeasListState.loading => const Center(
           child: CircularProgressIndicator(),
@@ -114,12 +116,12 @@ class _IdeasPageState extends State<IdeasPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  controller.errorMessage ?? 'Erreur inconnue.',
+                  controller.errorMessage ?? strings.captureError,
                   textAlign: TextAlign.center,
                   style: MurmurTextStyles.paragraph,
                 ),
                 const SizedBox(height: 16),
-                MurmurButton(onPressed: controller.refresh, label: 'Réessayer'),
+                MurmurButton(onPressed: controller.refresh, label: strings.retry),
               ],
             ),
           ),
@@ -140,8 +142,8 @@ class _IdeasPageState extends State<IdeasPage> {
                           ).colorScheme.onSurface.withValues(alpha: 0.35),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'Aucune idée pour le moment',
+                        Text(
+                          strings.ideasEmpty,
                           textAlign: TextAlign.center,
                           style: MurmurTextStyles.caption,
                         ),
@@ -175,26 +177,27 @@ class _IdeasPageState extends State<IdeasPage> {
   }
 
   Future<void> _rename(Idea idea) async {
+    final strings = StringsScope.of(context);
     final textController = TextEditingController(text: idea.title ?? '');
     final result = await showDialog<String?>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Renommer'),
+        title: Text(strings.renameTitle),
         content: TextField(
           controller: textController,
           autofocus: true,
           maxLength: 120,
-          decoration: const InputDecoration(hintText: 'Titre (optionnel)'),
+          decoration: InputDecoration(hintText: strings.renameHint),
         ),
         actions: [
           MurmurButton(
             variant: MurmurButtonVariant.text,
             onPressed: () => Navigator.of(context).pop(),
-            label: 'Annuler',
+            label: strings.cancel,
           ),
           MurmurButton(
             onPressed: () => Navigator.of(context).pop(textController.text),
-            label: 'Enregistrer',
+            label: strings.save,
           ),
         ],
       ),
@@ -203,11 +206,13 @@ class _IdeasPageState extends State<IdeasPage> {
     try {
       await widget.controller.rename(idea.id, result);
     } catch (e) {
-      _snack('Renommage impossible : $e');
+      if (!mounted) return;
+      _snack('${strings.renameFailed} : $e');
     }
   }
 
   Future<void> _setStatus(Idea idea, IdeaStatus status) async {
+    final strings = StringsScope.of(context);
     try {
       await widget.controller.setStatus(
         idea.id,
@@ -215,7 +220,8 @@ class _IdeasPageState extends State<IdeasPage> {
         reminders: widget.reminders,
       );
     } catch (e) {
-      _snack('Changement de statut impossible : $e');
+      if (!mounted) return;
+      _snack('${strings.statusFailed} : $e');
     }
   }
 
@@ -232,23 +238,24 @@ class _IdeasPageState extends State<IdeasPage> {
   }
 
   Future<void> _delete(Idea idea) async {
+    final strings = StringsScope.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Supprimer cette idée ?'),
-        content: const Text(
-          'L’audio et la fiche seront définitivement supprimés.',
+        title: Text(strings.deleteIdeaTitle),
+        content: Text(
+          strings.deleteIdeaBody,
           style: MurmurTextStyles.paragraph,
         ),
         actions: [
           MurmurButton(
             variant: MurmurButtonVariant.text,
             onPressed: () => Navigator.of(context).pop(false),
-            label: 'Garder',
+            label: strings.keep,
           ),
           MurmurButton(
             onPressed: () => Navigator.of(context).pop(true),
-            label: 'Supprimer',
+            label: strings.delete,
           ),
         ],
       ),
@@ -263,7 +270,8 @@ class _IdeasPageState extends State<IdeasPage> {
       );
       widget.highlightedIdeaId.value = null;
     } catch (e) {
-      _snack(e.toString());
+      if (!mounted) return;
+      _snack('${strings.deleteFailed} : $e');
     }
   }
 

@@ -17,6 +17,7 @@ import 'package:murmur/features/ideas/presentation/playback_controller.dart';
 import 'package:murmur/features/rediscovery/presentation/rediscovery_session.dart';
 import 'package:murmur/features/reminders/data/flutter_reminder_service.dart';
 import 'package:murmur/features/settings/presentation/settings_page.dart';
+import 'package:murmur/l10n/locale_controller.dart';
 import 'package:murmur/shared/widgets/murmur_nav_bar.dart';
 
 class FakeIdeaRepository implements IdeaRepository {
@@ -131,7 +132,7 @@ Idea _idea(String id) {
   );
 }
 
-Future<MurmurShell> _pumpShell(
+Future<({MurmurShell shell, CaptureController capture})> _pumpShell(
   WidgetTester tester, {
   List<Idea> ideas = const <Idea>[],
   ValueNotifier<String?>? highlighted,
@@ -156,6 +157,7 @@ Future<MurmurShell> _pumpShell(
     audioDir: audioDir,
     safetyDir: audioDir,
     appearance: AppearanceController(store: MemoryThemeModeStore()),
+    locale: LocaleController(store: MemoryLocaleStore()),
     highlightedIdeaId: highlighted ?? ValueNotifier<String?>(null),
   );
   addTearDown(
@@ -166,7 +168,7 @@ Future<MurmurShell> _pumpShell(
   await tester.pumpWidget(MaterialApp(home: shell));
   await tester.pump(const Duration(milliseconds: 100));
   await tester.pump(const Duration(milliseconds: 100));
-  return shell;
+  return (shell: shell, capture: capture);
 }
 
 void main() {
@@ -196,12 +198,17 @@ void main() {
     });
 
     testWidgets('record ouvre la feuille de capture', (tester) async {
-      await _pumpShell(tester);
+      final env = await _pumpShell(tester);
 
       await tester.tap(find.byIcon(LucideIcons.mic));
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.textContaining('Enregistrement'), findsWidgets);
+
+      // La feuille lance un enregistrement (ticker actif) : on l'annule
+      // pour ne laisser aucun Timer actif en fin de test.
+      await env.capture.discard();
+      await tester.pump(const Duration(milliseconds: 100));
     });
 
     testWidgets('commutation : fondu puis ancien onglet masqué', (

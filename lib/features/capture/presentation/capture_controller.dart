@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../../l10n/app_strings.dart';
 import '../data/recording_service.dart';
 import '../domain/capture_errors.dart';
 
@@ -13,10 +14,18 @@ enum CaptureState { idle, recording, saving, permissionDenied, error }
 /// [onSaved] est appelé après chaque sauvegarde réussie pour
 /// rafraîchir la liste (pas de logique métier dupliquée).
 class CaptureController extends ChangeNotifier {
-  CaptureController(this._service, {this._onSaved});
+  CaptureController(this._service, {this._onSaved, AppStrings? strings})
+    : _strings = strings ?? const FrStrings();
 
   final RecordingService _service;
   final Future<void> Function()? _onSaved;
+  AppStrings _strings;
+
+  /// Met à jour les chaînes (changement de langue).
+  void setStrings(AppStrings strings) {
+    _strings = strings;
+    notifyListeners();
+  }
 
   CaptureState state = CaptureState.idle;
   String? errorMessage;
@@ -54,11 +63,11 @@ class CaptureController extends ChangeNotifier {
     notifyListeners();
     try {
       await _service.start();
-    } on MicPermissionDenied catch (e) {
+    } on MicPermissionDenied {
       _ticker?.cancel();
       _recordingStartedAt = null;
       state = CaptureState.permissionDenied;
-      errorMessage = e.message;
+      errorMessage = _strings.micPermissionDenied;
       notifyListeners();
     } catch (e) {
       _ticker?.cancel();
@@ -84,7 +93,7 @@ class CaptureController extends ChangeNotifier {
     } on MetadataSaveFailure catch (e) {
       // L'audio est conservé sur disque : on l'explique, sans faux succès.
       state = CaptureState.error;
-      errorMessage = e.message;
+      errorMessage = _strings.metadataSaveFailed(e.cause);
       notifyListeners();
       await _onSaved?.call();
     } catch (e) {

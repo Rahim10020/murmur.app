@@ -1,27 +1,18 @@
+import '../../../../../l10n/app_strings.dart';
 import '../domain/idea.dart';
 
-/// Libellés français des statuts.
-const Map<IdeaStatus, String> statusLabels = <IdeaStatus, String>{
-  IdeaStatus.toReview: 'À revoir',
-  IdeaStatus.inProgress: 'En cours',
-  IdeaStatus.done: 'Terminée',
-  IdeaStatus.archived: 'Archivée',
-};
+/// Libellés de statuts localisés.
+String statusLabelFor(IdeaStatus status, [AppStrings? strings]) =>
+    (strings ?? const FrStrings()).statusLabel(status);
 
-const List<String> _months = <String>[
-  'janvier',
-  'février',
-  'mars',
-  'avril',
-  'mai',
-  'juin',
-  'juillet',
-  'août',
-  'septembre',
-  'octobre',
-  'novembre',
-  'décembre',
-];
+/// Compat historique : libellés français par défaut.
+Map<IdeaStatus, String> get statusLabels =>
+    <IdeaStatus, String>{
+      IdeaStatus.toReview: const FrStrings().statusLabel(IdeaStatus.toReview),
+      IdeaStatus.inProgress: const FrStrings().statusLabel(IdeaStatus.inProgress),
+      IdeaStatus.done: const FrStrings().statusLabel(IdeaStatus.done),
+      IdeaStatus.archived: const FrStrings().statusLabel(IdeaStatus.archived),
+    };
 
 String formatDuration(Duration duration) {
   final totalSeconds = duration.inSeconds;
@@ -31,19 +22,17 @@ String formatDuration(Duration duration) {
 }
 
 /// Titre lisible : titre saisi, sinon repli localisé (jamais une transcription).
-String fallbackTitle(Idea idea) {
+String fallbackTitle(Idea idea, [AppStrings? strings]) {
+  final s = strings ?? const FrStrings();
   final custom = idea.title?.trim();
   if (custom != null && custom.isNotEmpty) return custom;
   final local = idea.createdAtUtc.toLocal();
-  return 'Idée du ${local.day} ${_months[local.month - 1]}';
+  return s.fallbackTitle(local.day, s.monthName(local.month));
 }
 
 /// Mention de rappel affichée sous une idée (heure locale).
-String formatReminder(DateTime reminderAtUtc) {
+String formatReminder(DateTime reminderAtUtc, [AppStrings? strings]) {
+  final s = strings ?? const FrStrings();
   final local = reminderAtUtc.toLocal();
-  final day = local.day.toString().padLeft(2, '0');
-  final month = local.month.toString().padLeft(2, '0');
-  final hour = local.hour.toString().padLeft(2, '0');
-  final minute = local.minute.toString().padLeft(2, '0');
-  return 'Rappel le $day/$month à $hour:$minute';
+  return s.formatReminder(local.day, local.month, local.hour, local.minute);
 }
