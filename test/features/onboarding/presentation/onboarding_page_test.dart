@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:murmur/app/theme.dart';
 import 'package:murmur/features/onboarding/presentation/onboarding_page.dart';
 
@@ -24,6 +25,7 @@ void main() {
 
       // Écran 1 : pas de Retour, Continuer + Passer présents.
       expect(find.text('Une idée ? Murmurez-la.'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.micVocal), findsOneWidget);
       expect(find.text('Retour'), findsNothing);
       expect(find.text('Continuer'), findsOneWidget);
       expect(find.text('Passer'), findsOneWidget);
@@ -31,11 +33,13 @@ void main() {
       await tester.tap(find.text('Continuer'));
       await tester.pumpAndSettle();
       expect(find.text('Vos mots restent à vous.'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.shieldCheck), findsOneWidget);
       expect(find.text('Retour'), findsOneWidget);
 
       await tester.tap(find.text('Continuer'));
       await tester.pumpAndSettle();
       expect(find.text('On vous la rappelle.'), findsOneWidget);
+      expect(find.byIcon(LucideIcons.bellRing), findsOneWidget);
       expect(find.text('Commencer'), findsOneWidget);
       expect(done, 0);
     });

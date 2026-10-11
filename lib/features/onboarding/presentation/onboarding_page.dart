@@ -1,30 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 
 import '../../../app/text_styles.dart';
 import '../../../shared/widgets/murmur_button.dart';
 
-/// Une page d'onboarding : grand titre + paragraphe, sans icônes.
+/// Une page d'onboarding : icône, grand titre + paragraphe, tout centré.
 class OnboardingContent {
-  const OnboardingContent({required this.title, required this.body});
+  const OnboardingContent({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
 
+  final IconData icon;
   final String title;
   final String body;
 }
 
 const List<OnboardingContent> onboardingPages = [
   OnboardingContent(
+    icon: LucideIcons.micVocal,
     title: 'Une idée ? Murmurez-la.',
     body:
         'Capturez vos pensées à voix haute en un geste. '
         'Rien à écrire, rien à classer.',
   ),
   OnboardingContent(
+    icon: LucideIcons.shieldCheck,
     title: 'Vos mots restent à vous.',
     body:
         '100 % hors-ligne, sur votre téléphone. '
         'Rien n’est envoyé, rien n’est analysé.',
   ),
   OnboardingContent(
+    icon: LucideIcons.bellRing,
     title: 'On vous la rappelle.',
     body:
         'Programmez un rappel, ou laissez Murmur vous faire '
@@ -92,10 +101,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     final page = onboardingPages[index];
                     return Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
+                        Icon(
+                          page.icon,
+                          size: 82,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        const SizedBox(height: 48),
                         Text(
                           page.title,
+                          textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontFamily: 'Gotham',
                             fontWeight: FontWeight.w500,
@@ -106,6 +122,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         const SizedBox(height: 16),
                         Text(
                           page.body,
+                          textAlign: TextAlign.center,
                           style: MurmurTextStyles.paragraph.copyWith(
                             fontSize: 17,
                           ),
