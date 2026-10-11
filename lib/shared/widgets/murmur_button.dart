@@ -22,7 +22,7 @@ enum MurmurButtonVariant {
 class MurmurButtonDefaults {
   const MurmurButtonDefaults._();
 
-  static const double height = 52;
+  static const double height = 62;
   static const double borderRadius = 16;
   static const double fontSize = 16;
   static const double iconSize = 20;
