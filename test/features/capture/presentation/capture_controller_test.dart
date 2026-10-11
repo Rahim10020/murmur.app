@@ -159,5 +159,19 @@ void main() {
       expect(controller.state, CaptureState.recording);
       await controller.discard();
     });
+
+    test('notifie les listeners pendant le recording', () async {
+      final service = await _service();
+      final controller = CaptureController(service);
+      addTearDown(controller.dispose);
+      var notifications = 0;
+      controller.addListener(() => notifications++);
+
+      await controller.start();
+      await Future<void>.delayed(const Duration(milliseconds: 1100));
+
+      expect(notifications, greaterThanOrEqualTo(3));
+      await controller.discard();
+    });
   });
 }

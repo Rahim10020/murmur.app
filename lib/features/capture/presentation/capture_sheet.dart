@@ -37,6 +37,7 @@ class _CaptureSheetState extends State<CaptureSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() {});
     });
+    WidgetsBinding.instance.scheduleFrame();
   }
 
   @override
