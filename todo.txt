@@ -1,1 +1,1 @@
--- mettre en place deux langues : FR , ENG
+-- apres voir ce qu'on peut improve.
