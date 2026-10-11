@@ -85,12 +85,32 @@ class _RediscoverySessionPageState extends State<RediscoverySessionPage> {
                 final audioPath =
                     '${widget.audioDir.path}/${idea.audioFileName}';
                 final playing = widget.playback.isPlaying(idea.id);
+                final loading =
+                    widget.playback.state == PlaybackState.loading &&
+                    widget.playback.currentIdeaId == idea.id;
                 return ListTile(
-                  leading: IconButton(
-                    tooltip: playing ? 'Pause' : 'Lire',
-                    icon: Icon(playing ? LucideIcons.pause : LucideIcons.play),
-                    onPressed: () => widget.playback.toggle(idea, audioPath),
-                  ),
+                  leading: loading
+                      ? const SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          ),
+                        )
+                      : IconButton(
+                          tooltip: playing ? 'Pause' : 'Lire',
+                          icon: Icon(
+                            playing ? LucideIcons.pause : LucideIcons.play,
+                          ),
+                          onPressed: () =>
+                              widget.playback.toggle(idea, audioPath),
+                        ),
                   title: Text(fallbackTitle(idea)),
                   subtitle: Text(
                     'Enregistrée le ${_formatDate(idea.createdAtUtc)} • '

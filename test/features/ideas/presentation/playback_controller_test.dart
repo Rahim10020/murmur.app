@@ -150,6 +150,10 @@ void main() {
       addTearDown(controller.dispose);
 
       await controller.play(_idea('a'), audioPath);
+      // La lecture doit d'abord être confirmée par le natif ; ensuite une
+      // interruption externe (playing:false) bascule bien en pause.
+      backend.emitStatus(_status(playing: true));
+      await _flushEvents();
       backend.emitStatus(_status(playing: false));
       await _flushEvents();
 
@@ -197,6 +201,39 @@ void main() {
       expect(controller.state, PlaybackState.playing);
       await controller.stopIfCurrent('a');
       expect(controller.state, PlaybackState.idle);
+    });
+
+    test('faux signal initial playing:false ne coupe pas le 1er tap', () async {
+      // Repro du bug critique : just_audio émet des statuts initiaux avec
+      // playing:false (valeurs par défaut du wrapper, buffering) juste après
+      // play(). Ils ne doivent pas rabattre vers paused avant confirmation.
+      final dir = await Directory.systemTemp.createTemp('murmur-play-');
+      addTearDown(() => dir.delete(recursive: true));
+      final audioPath = '${dir.path}/a.m4a';
+      await File(audioPath).writeAsBytes(<int>[1]);
+
+      final backend = FakePlayerBackend();
+      final controller = PlaybackController(backend);
+      addTearDown(controller.dispose);
+
+      await controller.play(_idea('a'), audioPath);
+      expect(controller.state, PlaybackState.playing);
+
+      // Faux signal initial : reste en lecture.
+      backend.emitStatus(_status(playing: false));
+      await _flushEvents();
+      expect(controller.state, PlaybackState.playing);
+      expect(controller.isPlaying('a'), isTrue);
+
+      // Confirmation native : toujours en lecture.
+      backend.emitStatus(_status(playing: true));
+      await _flushEvents();
+      expect(controller.state, PlaybackState.playing);
+
+      // Interruption GENUINE après confirmation : bascule en pause.
+      backend.emitStatus(_status(playing: false));
+      await _flushEvents();
+      expect(controller.state, PlaybackState.paused);
     });
   });
 }

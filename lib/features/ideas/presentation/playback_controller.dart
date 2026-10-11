@@ -26,6 +26,13 @@ class PlaybackController extends ChangeNotifier {
   String? errorMessage;
   StreamSubscription<PlayerStatus>? _statusSubscription;
 
+  /// Vrai dès qu'un événement `playing: true` a été reçu pour la lecture
+  /// en cours. Tant que ce n'est pas confirmé, les événements
+  /// `playing: false` initiaux (valeurs par défaut du wrapper, transition
+  /// stop → load → buffering de just_audio) sont ignorés : ils ne doivent
+  /// pas rabattre un `playing` optimiste vers `paused` au premier tap.
+  bool _playingConfirmed = false;
+
   bool isActiveFor(String ideaId) =>
       currentIdeaId == ideaId &&
       (state == PlaybackState.playing ||
@@ -61,6 +68,7 @@ class PlaybackController extends ChangeNotifier {
     position = Duration.zero;
     totalDuration = null;
     errorMessage = null;
+    _playingConfirmed = false;
     notifyListeners();
 
     if (!await File(audioPath).exists()) {
@@ -71,14 +79,24 @@ class PlaybackController extends ChangeNotifier {
     }
     try {
       totalDuration = await _backend.loadFile(audioPath);
-      await _backend.play();
-      state = PlaybackState.playing;
-      notifyListeners();
+      // S'abonner AVANT play() : ne rater aucun événement natif et laisser
+      // _onStatus confirmer le passage en lecture.
+      await _cancelStatusSubscription();
       _statusSubscription = _backend.statusStream().listen(
         _onStatus,
         onError: (_) {},
       );
+      await _backend.play();
+      // Filet de sécurité : si le stream ne confirme pas (backend factice
+      // en test, événement déjà consommé), on affiche quand même l'état
+      // lecture. Les faux `playing: false` initiaux restent ignorés via
+      // _playingConfirmed (voir _onStatus).
+      if (state == PlaybackState.loading) {
+        state = PlaybackState.playing;
+        notifyListeners();
+      }
     } catch (e) {
+      await _cancelStatusSubscription();
       state = PlaybackState.error;
       errorMessage = 'Lecture impossible : $e';
       notifyListeners();
@@ -121,6 +139,7 @@ class PlaybackController extends ChangeNotifier {
     } catch (_) {
       // Best-effort.
     }
+    _playingConfirmed = false;
     state = PlaybackState.idle;
     currentIdeaId = null;
     position = Duration.zero;
@@ -129,16 +148,21 @@ class PlaybackController extends ChangeNotifier {
   }
 
   Future<void> _resume() async {
+    // On exige une re-confirmation : les événements `playing: false`
+    // émis pendant la reprise (re-buffering) ne doivent pas rebasculer
+    // aussitôt en pause.
+    _playingConfirmed = false;
     state = PlaybackState.playing;
     notifyListeners();
     try {
-      await _backend.play();
       await _cancelStatusSubscription();
       _statusSubscription = _backend.statusStream().listen(
         _onStatus,
         onError: (_) {},
       );
+      await _backend.play();
     } catch (e) {
+      await _cancelStatusSubscription();
       state = PlaybackState.error;
       errorMessage = 'Lecture impossible : $e';
       notifyListeners();
@@ -155,12 +179,19 @@ class PlaybackController extends ChangeNotifier {
       if (state == PlaybackState.playing) {
         state = PlaybackState.completed;
       }
+    } else if (status.playing) {
+      _playingConfirmed = true;
+      if (state == PlaybackState.paused ||
+          state == PlaybackState.loading) {
+        state = PlaybackState.playing;
+      }
     } else if (!status.playing && state == PlaybackState.playing) {
-      // Interruption externe (appel, autre app audio…).
-      state = PlaybackState.paused;
-    } else if (status.playing &&
-        (state == PlaybackState.paused || state == PlaybackState.loading)) {
-      state = PlaybackState.playing;
+      // Interruption externe (appel, autre app audio…) : uniquement si la
+      // lecture avait déjà été confirmée, sinon c'est un faux signal
+      // initial (buffering / valeur par défaut du wrapper).
+      if (_playingConfirmed) {
+        state = PlaybackState.paused;
+      }
     }
     notifyListeners();
   }

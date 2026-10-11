@@ -34,17 +34,32 @@ class IdeaTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final playing = playback.isPlaying(idea.id);
+    final loading =
+        playback.state == PlaybackState.loading &&
+        playback.currentIdeaId == idea.id;
     final audioPath = '${audioDir.path}/${idea.audioFileName}';
     final hasReminder = idea.reminderAtUtc != null;
     final tile = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         ListTile(
-          leading: IconButton(
-            tooltip: playing ? 'Pause' : 'Lire',
-            icon: Icon(playing ? LucideIcons.pause : LucideIcons.play),
-            onPressed: () => playback.toggle(idea, audioPath),
-          ),
+          leading: loading
+              ? const SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                )
+              : IconButton(
+                  tooltip: playing ? 'Pause' : 'Lire',
+                  icon: Icon(playing ? LucideIcons.pause : LucideIcons.play),
+                  onPressed: () => playback.toggle(idea, audioPath),
+                ),
           title: Text(fallbackTitle(idea)),
           subtitle: Text(_subtitle(hasReminder)),
           trailing: Row(

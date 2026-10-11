@@ -31,6 +31,30 @@ class FakeRecorderBackend implements RecorderBackend {
   Future<void> stop() async {}
 }
 
+/// Backend lent : simule la demande de permission + init recorder (~600ms).
+class SlowRecorderBackend implements RecorderBackend {
+  @override
+  Future<void> cancel() async {}
+
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  Future<bool> hasPermission() async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    return true;
+  }
+
+  @override
+  Future<void> start({required String path}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await File(path).writeAsBytes(<int>[0]);
+  }
+
+  @override
+  Future<void> stop() async {}
+}
+
 Future<RecordingService> _service({bool permissionGranted = true}) async {
   final db = await IdeaDatabase.open(path: inMemoryDatabasePath);
   final audioDir = await Directory.systemTemp.createTemp('murmur-cap-');
@@ -104,6 +128,36 @@ void main() {
 
       await controller.stopAndSave();
       expect(controller.state, CaptureState.idle);
+    });
+
+    test('le compteur bouge même pendant le démarrage lent', () async {
+      final db = await IdeaDatabase.open(path: inMemoryDatabasePath);
+      final audioDir = await Directory.systemTemp.createTemp('murmur-cap-');
+      final service = RecordingService(
+        repository: SqfliteIdeaRepository(db),
+        backend: SlowRecorderBackend(),
+        audioDirectoryProvider: () async => audioDir,
+      );
+      addTearDown(() async {
+        await db.close();
+        if (await audioDir.exists()) await audioDir.delete(recursive: true);
+      });
+      final controller = CaptureController(service);
+      addTearDown(controller.dispose);
+
+      final starting = controller.start();
+      // Pendant que le backend initialise (permission + recorder), le
+      // compteur piloté par le controller doit déjà avancer.
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      expect(controller.state, CaptureState.recording);
+      expect(
+        controller.elapsed.inMilliseconds,
+        greaterThanOrEqualTo(300),
+        reason: 'le décompte doit démarrer au tap, pas après le backend',
+      );
+      await starting;
+      expect(controller.state, CaptureState.recording);
+      await controller.discard();
     });
   });
 }

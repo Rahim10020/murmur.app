@@ -22,9 +22,16 @@ class CaptureController extends ChangeNotifier {
   String? errorMessage;
   Timer? _ticker;
 
+  /// Instant local du tap "enregistrer", positionné AVANT l'init async du
+  /// backend (permission système, init recorder). Évite un compteur figé
+  /// à 0:00 pendant cette fenêtre.
+  DateTime? _recordingStartedAt;
+
   bool get isRecording => state == CaptureState.recording;
 
   Duration get elapsed {
+    final localStart = _recordingStartedAt;
+    if (localStart != null) return DateTime.now().difference(localStart);
     final startedAt = _service.startedAt;
     if (startedAt == null) return Duration.zero;
     return DateTime.now().difference(startedAt);
@@ -36,19 +43,26 @@ class CaptureController extends ChangeNotifier {
     }
     state = CaptureState.recording;
     errorMessage = null;
+    _recordingStartedAt = DateTime.now();
+    _ticker?.cancel();
+    // Ticker immédiat : le compteur bouge même pendant la demande de
+    // permission / l'init du recorder.
+    _ticker = Timer.periodic(
+      const Duration(milliseconds: 500),
+      (_) => notifyListeners(),
+    );
     notifyListeners();
     try {
       await _service.start();
-      _ticker?.cancel();
-      _ticker = Timer.periodic(
-        const Duration(milliseconds: 500),
-        (_) => notifyListeners(),
-      );
     } on MicPermissionDenied catch (e) {
+      _ticker?.cancel();
+      _recordingStartedAt = null;
       state = CaptureState.permissionDenied;
       errorMessage = e.message;
       notifyListeners();
     } catch (e) {
+      _ticker?.cancel();
+      _recordingStartedAt = null;
       state = CaptureState.error;
       errorMessage = e.toString();
       notifyListeners();
@@ -58,6 +72,7 @@ class CaptureController extends ChangeNotifier {
   Future<void> stopAndSave() async {
     if (state != CaptureState.recording) return;
     _ticker?.cancel();
+    _recordingStartedAt = null;
     state = CaptureState.saving;
     notifyListeners();
     try {
@@ -81,6 +96,7 @@ class CaptureController extends ChangeNotifier {
 
   Future<void> discard() async {
     _ticker?.cancel();
+    _recordingStartedAt = null;
     try {
       await _service.discard();
     } finally {
